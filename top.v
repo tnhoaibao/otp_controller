@@ -102,7 +102,7 @@ wire rcm_sys_clk;
 // Instantiate i2c top module
 i2c_top i2c_top_i (
 .rst_n				(rst_n				),
-.otp_done			(otp_busy_w			),
+.otp_done			(~otp_busy_w		),
 .testmode_en		(i_run_test_mode	),
 .xbus_addr			(i2c_xbus_addr		),
 .xbus_wr			(i2c_xbus_wr		),
@@ -133,7 +133,7 @@ i2c_top i2c_top_i (
 
 // Instantiate apb mux module
 apb_mux apb_mux_i (
-.i2c_busy			(i2c_busy_w			),
+.i2c_busy			(hif_idle			),
 .otp_busy			(otp_busy_w			),
 .i2c_xbus_addr		(i2c_xbus_addr		),
 .i2c_xbus_wr		(i2c_xbus_wr		),
@@ -175,7 +175,7 @@ otp_main otp_main_i (
 
 // Instantiate otp_rcm module
 otp_rcm otp_rcm_i (
-.i2c_busy			(i2c_busy_w			),
+.i2c_busy			(hif_idle			),
 .passcode_en		(i_run_test_mode	),
 .otp_busy			(otp_busy_w			),
 .scan_en			(scan_en			),

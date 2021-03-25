@@ -7,7 +7,7 @@
 
 # File distribution  (v1.2)
  
- top------ i2c verilog files (will be updated)
+top ------ i2c verilog files (will be updated)
      -
 	 -
 	 ----- otp_top ------ otp_main.sv
