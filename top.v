@@ -57,7 +57,39 @@ output o_otp_pgenb;
 
 wire otp_busy_w;
 
-// apb mux module
+// Instantiate i2c top module
+i2c_top i2c_top_i (
+.rst_n				(rst_n),
+.otp_done			(),
+.testmode_en		(),
+.xbus_addr			(i2c_xbus_addr),
+.xbus_wr			(i2c_xbus_wr),
+.xbus_din			(i2c_xbus_din),
+.xbus_dout			(i2c_xbus_dout),
+.i2c_sda_clk		(i2c_sda_clk),
+.i2c_sda_n_clk		(i2c_sda_n_clk),
+.i2c_scl			(i2c_scl),
+.slow_clk			(slow_clk),
+.i2c_stop_rst_n		(i2c_stop_rst_n),
+.i2c_scl_rst_n		(i2c_scl_rst_n),
+.i2c_rst_n			(i2c_rst_n),
+.i2c_wd_en_n		(i2c_wd_en_n),
+.i2c_wd_sel			(i2c_wd_sel),
+.i2c_active			(i2c_active),
+.i2c_start			(i2c_start),
+.i2c_stop			(i2c_stop),
+.i2c_wd_rst			(i2c_wd_rst),
+.i2c_scl_clk		(i2c_scl_clk),
+.i2c_scl_n_clk		(i2c_scl_n_clk),
+.i2c_active_rst_n	(i2c_active_rst_n),
+.i2c_sda_i			(i2c_sda_i),
+.i2c_sda_o			(i2c_sda_o),
+.m_i2c_addr			(m_i2c_addr),
+.i2c_addr_inv		(i2c_addr_inv),
+.hif_idle			(hif_idle)
+);
+
+// Instantiate apb mux module
 apb_mux apb_mux_i (
 .i2c_busy			(i2c_busy_w),
 .otp_busy			(otp_busy_w),
@@ -77,7 +109,7 @@ apb_mux apb_mux_i (
 .rst_n				(rst_n)
 );
 
-// otp controller module
+// Instantiate otp controller module
 otp_main otp_main_i (
 .sys_clk			(sys_clk),
 .rst_n				(rst_n),
@@ -99,7 +131,7 @@ otp_main otp_main_i (
 .o_otp_busy			(otp_busy_w)
 );
 
-// otp_rcm module
+// Instantiate otp_rcm module
 otp_rcm otp_rcm_i (
 .i2c_busy			(i2c_busy_w),
 .passcode_en		(i_run_test_mode),

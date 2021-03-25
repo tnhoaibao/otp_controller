@@ -2,8 +2,6 @@
 module i2c_top (
 	rst_n, // System reset
 	otp_done, // signal indicating OTP done
-	spi_csb_n_clk, // Clock signal using falling edge of CSB
-	spi_csb, // SPI CSB signal
 	testmode_en, // test mode enable
 	xbus_addr, // xbus address bus
 	xbus_wr, // xbus write control signal
@@ -30,9 +28,6 @@ module i2c_top (
 	m_i2c_addr, // I2C address
 	i2c_addr_inv, // Inverted bit for I2C address
 	hif_idle, // idle signal for host interface
-	if_select, // Interface protocol selection
-	i2c_if, // config bit to use i2c interface explicitly
-	spi_if // config bit to use spi interface explicitly
 	);
 	
 parameter MAX_NOR_REG_ADDR = 8'h64;
@@ -41,8 +36,6 @@ parameter XBUS_ADDR_WIDTH = 7;
 	
 input rst_n;
 input otp_done;
-input spi_csb_n_clk;
-input spi_csb;
 input testmode_en;
 output xbus_addr;
 output xbus_wr;
@@ -69,9 +62,6 @@ output i2c_sda_o;
 input m_i2c_addr;
 input i2c_addr_inv;
 output hif_idle;
-input i2c_if;
-input spi_if;
-	
 
 reg [XBUS_ADDR_WIDTH-1:0] xbus_addr;
 reg xbus_wr;
