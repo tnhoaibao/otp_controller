@@ -1,5 +1,5 @@
 `timescale 1ns/10ps
-module hif (
+module i2c_top (
 	rst_n, // System reset
 	otp_done, // signal indicating OTP done
 	spi_csb_n_clk, // Clock signal using falling edge of CSB
