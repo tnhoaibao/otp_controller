@@ -18,7 +18,8 @@ module otp_main (
 	o_xbus_addr,	//address bus to access reg file
 	i_xbus_dout,	//data bus from reg file
 	i_otp_read_n, //enable read mode of efuse controller, active low
-	i_otp_prog	//enable program mode of efuse controller
+	i_otp_prog,	//enable program mode of efuse controller
+	o_xbus_wr	//enable signal indicates read or write data to register file
 	);
 
 parameter num_of_reg = 100; //number of registers will be loaded into otp memory
@@ -35,7 +36,7 @@ parameter [6:0] ADDR_ARRAY [0 : num_of_reg-1] = {7'd1, 7'd2, 7'd3, 7'd4, 7'd5, 7
 // maximum count for start_pgm is 3 (SUP_PG timing)
 parameter TSUP_PG = 3;
 // maximum count for main_pgm is 1000 (PGM timing)
-parameter TPGM = 100;
+parameter TPGM = 100; //define smaller number to verify
 // maximum count for finish_pgm is 3 (HP_PG timing)
 parameter ADDR_DUMMY = 7'h7F;
 
@@ -57,6 +58,7 @@ output [6:0] o_xbus_addr;
 input [7:0] i_xbus_dout;
 input i_otp_read_n;
 input i_otp_prog;
+output o_xbus_wr;
 
 reg [1:0] fsm_rd_cnt_r;			//up counter for *_read state
 wire [1:0] fsm_rd_cnt_next_w;	
@@ -84,6 +86,7 @@ reg efuse_vddq_r;
 reg efuse_strobe_r;
 reg efuse_pgenb_r;
 reg [7:0] xbus_din_r;
+reg xbus_wr_r;
 
 // define states in fsm
 typedef enum {IDLE, WAIT_I2C, START_READ, MAIN_READ, FINISH_READ, START_PGM, MAIN_PGM, FINISH_PGM} efuse_fsm_t;
@@ -375,5 +378,16 @@ always @(posedge sys_clk or negedge rst_n)
   end
 
 assign o_xbus_din = xbus_din_r; 
+
+// generate write/read enable sent to reg file (apb slave)
+always @(posedge sys_clk or negedge rst_n)
+  begin
+    if (rst_n == 0) begin
+	  xbus_wr_r <= 1'b0;
+	end else if (efuse_fsm_r == MAIN_READ) xbus_wr_r <= 1'b1;
+	else xbus_wr_r <= 1'b0;
+  end
+  
+assign o_xbus_wr = xbus_wr_r;
 
 endmodule

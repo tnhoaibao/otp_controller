@@ -45,7 +45,9 @@ apb_fsm_t apb_fsm_r, apb_fsm_next_w;
 
 // implement fsm for otp or i2c choosing combine with apb mux
 // specification v1.1
-// 
+// Reset usb chip, the FSm moves to OTP to be ready for a loading data transaction
+// Finish first loading data, it moves to IDLE
+// Based on otp_busy and i2c_busy situation, next state is determined.
 always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0)
@@ -72,7 +74,7 @@ always @(*)
 	end
   end
 
-// generated mux to choose otp or i2c interface
+// generated mux to choose otp or i2c interface for input
 always @(*)
   begin
     if ((apb_fsm_r == IDLE) || (apb_fsm_r == I2C_ACCESS))
@@ -88,7 +90,7 @@ always @(*)
 		xbus_din = otp_xbus_din;
 	  end
   end
-  
+// generated mux to choose otp or i2c interface for output 
 always @(*)
   begin
     if ((apb_fsm_r == IDLE) || (apb_fsm_r == I2C_ACCESS))
