@@ -8,11 +8,11 @@
 # File distribution  (v1.2)
  
  top------ i2c verilog files (will be updated)
-      |
-	  |
-	  |--- otp_top ----- otp_main.sv
-	                |
-					|--- apb_mux.sv
-					|
-					|--- otp_rcm.v
+      -
+	  -
+	  ---- otp_top ----- otp_main.sv
+	                -
+					---- apb_mux.sv
+					-
+					---- otp_rcm.v
 					
