@@ -17,9 +17,10 @@ module otp_main (
 	o_xbus_din,		//data bus to access reg file
 	o_xbus_addr,	//address bus to access reg file
 	i_xbus_dout,	//data bus from reg file
-	i_otp_read_n, //enable read mode of efuse controller, active low
-	i_otp_prog,	//enable program mode of efuse controller
-	o_xbus_wr	//enable signal indicates read or write data to register file
+	i_otp_read_n, 	//enable read mode of efuse controller, active low
+	i_otp_prog,		//enable program mode of efuse controller
+	o_xbus_wr,		//enable signal indicates read or write data to register file
+	o_otp_busy 		//input signal indicates that there is otp transaction or not, 1-i2c transaction, 0-no i2c transaction
 	);
 
 parameter num_of_reg = 100; //number of registers will be loaded into otp memory
@@ -59,6 +60,8 @@ input [7:0] i_xbus_dout;
 input i_otp_read_n;
 input i_otp_prog;
 output o_xbus_wr;
+
+output o_otp_busy;
 
 reg [1:0] fsm_rd_cnt_r;			//up counter for *_read state
 wire [1:0] fsm_rd_cnt_next_w;	
@@ -389,5 +392,12 @@ always @(posedge sys_clk or negedge rst_n)
   end
   
 assign o_xbus_wr = xbus_wr_r;
+
+// generate otp_busy sent to apb mux (should be checked, why we need otp_busy in this case)
+always @(*)
+  begin
+    if ((efuse_fsm_r == IDLE) || (efuse_fsm_r == WAIT_I2C)) o_otp_busy = 1'b0;
+	else o_otp_busy = 1'b1;
+  end
 
 endmodule

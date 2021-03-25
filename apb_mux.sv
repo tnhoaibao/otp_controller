@@ -1,8 +1,8 @@
 `timescale 1ns/10ps
 
 module apb_mux (
-	otp_busy,		//input signal indicates that there is i2c transaction or not, 1-i2c transaction, 0-no i2c transaction
-	i2c_busy,		//input signal indicates that there is otp prg/read transaction or not, 1-otp transaction, 0-no otp transaction
+	i2c_busy,		//input signal indicates that there is i2c transaction or not, 1-i2c transaction, 0-no i2c transaction
+	otp_busy,		//input signal indicates that there is otp prg/read transaction or not, 1-otp transaction, 0-no otp transaction
 	i2c_xbus_addr,	//i2c address bus to access reg file
 	i2c_xbus_wr,	//i2c read/write enable to access reg file, 1-write, 0-read
 	i2c_xbus_din,	//i2c input data bus to access to reg file
@@ -90,6 +90,7 @@ always @(*)
 		xbus_din = otp_xbus_din;
 	  end
   end
+  
 // generated mux to choose otp or i2c interface for output 
 always @(*)
   begin
