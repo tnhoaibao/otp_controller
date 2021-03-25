@@ -21,8 +21,8 @@ module top (
 	o_otp_addr,		//address access to otp mem
 	o_otp_pgenb,	//program enable, active low
 	// for dft implement
-	scan_en,
-	scan_clk
+	scan_en,		//scan enable
+	scan_clk		//scan clock
 );
 otp_rcm otp_rcm_i (
 .i2c_busy			(i2c_busy_w),
