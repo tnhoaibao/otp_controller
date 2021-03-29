@@ -97,7 +97,7 @@ efuse_fsm_t efuse_fsm_r, efuse_fsm_next_w;
 
 // implement fsm for otp controller
 // specification v1.1
-// Reset usb chip, the FSM moves to START_READD imediately to load otp data to reg
+// Reset usb chip, the FSM moves to START_READ imediately to load otp data to reg
 // Then, it moves to IDLE
 // Once there is no i2c transaction and otp controller receives read/pgm start bit, the fsm moves to read/pgm cycle
 always @(posedge sys_clk or negedge rst_n)
@@ -115,22 +115,38 @@ always @(*)
     else begin
       case (efuse_fsm_r)
 		IDLE: efuse_fsm_next_w = WAIT_I2C;
-		WAIT_I2C: if ((i_i2c_busy == 0) && (i_otp_prog == 1)) efuse_fsm_next_w = START_PGM;
-				else if ((i_i2c_busy == 0) && (i_otp_read_n == 0)) efuse_fsm_next_w = START_READ;
-				else if (i_i2c_busy == 1) efuse_fsm_next_w = IDLE;
-				else efuse_fsm_next_w = WAIT_I2C;
-		START_READ: if (fsm_rd_cnt_r == 1) efuse_fsm_next_w = MAIN_READ;
-				else efuse_fsm_next_w = START_READ;
-		MAIN_READ: if ((num_reg_r == (num_of_reg - 1)) && (fsm_rd_cnt_r == 3)) efuse_fsm_next_w = FINISH_READ;
-				else efuse_fsm_next_w = MAIN_READ;
-		FINISH_READ: if (fsm_rd_cnt_r == 1) efuse_fsm_next_w = IDLE;
-	    	    else efuse_fsm_next_w = FINISH_READ;
-		START_PGM: if (fsm_pgm_cnt_r == 3) efuse_fsm_next_w = MAIN_PGM;
-				else efuse_fsm_next_w = START_PGM;
-		MAIN_PGM: if ((num_reg_r == (num_of_reg - 1)) && (fsm_pgm_cnt_r == TPGM)) efuse_fsm_next_w = FINISH_PGM;
-				else efuse_fsm_next_w = MAIN_PGM;
-		FINISH_PGM: if (fsm_pgm_cnt_r == 3) efuse_fsm_next_w = IDLE;
-				else efuse_fsm_next_w = FINISH_PGM;
+		WAIT_I2C: if ((i_i2c_busy == 0) && (i_otp_prog == 1))
+						efuse_fsm_next_w = START_PGM;
+					else if ((i_i2c_busy == 0) && (i_otp_read_n == 0)) 
+						efuse_fsm_next_w = START_READ;
+					else if (i_i2c_busy == 1) 
+						efuse_fsm_next_w = IDLE;
+					else 
+						efuse_fsm_next_w = WAIT_I2C;
+		START_READ: if (fsm_rd_cnt_r == 1) 
+						efuse_fsm_next_w = MAIN_READ;
+					else
+						efuse_fsm_next_w = START_READ;
+		MAIN_READ:  if ((num_reg_r == (num_of_reg - 1)) && (fsm_rd_cnt_r == 3)) 
+						efuse_fsm_next_w = FINISH_READ;
+					else
+						efuse_fsm_next_w = MAIN_READ;
+		FINISH_READ: if (fsm_rd_cnt_r == 1) 
+						efuse_fsm_next_w = IDLE;
+					else
+						efuse_fsm_next_w = FINISH_READ;
+		START_PGM: if (fsm_pgm_cnt_r == 3) 
+						efuse_fsm_next_w = MAIN_PGM;
+					else
+						efuse_fsm_next_w = START_PGM;
+		MAIN_PGM: if ((num_reg_r == (num_of_reg - 1)) && (fsm_pgm_cnt_r == TPGM)) 
+						efuse_fsm_next_w = FINISH_PGM;
+					else 
+						efuse_fsm_next_w = MAIN_PGM;
+		FINISH_PGM: if (fsm_pgm_cnt_r == 3) 
+						efuse_fsm_next_w = IDLE;
+					else
+						efuse_fsm_next_w = FINISH_PGM;
 		default: efuse_fsm_next_w = IDLE;
       endcase
     end
@@ -394,10 +410,6 @@ always @(posedge sys_clk or negedge rst_n)
 assign o_xbus_wr = xbus_wr_r;
 
 // generate otp_busy sent to apb mux (should be checked, why we need otp_busy in this case)
-always @(*)
-  begin
-    if ((efuse_fsm_r == IDLE) || (efuse_fsm_r == WAIT_I2C)) o_otp_busy = 1'b0;
-	else o_otp_busy = 1'b1;
-  end
+assign o_otp_busy = ((efuse_fsm_r == IDLE) || (efuse_fsm_r == WAIT_I2C)) ? 1'b0 : 1'b1;
 
 endmodule

@@ -51,7 +51,7 @@ apb_fsm_t apb_fsm_r, apb_fsm_next_w;
 always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0)
-      apb_fsm_r <= OTP;
+      apb_fsm_r <= OTP_ACCESS;
     else
       apb_fsm_r <= apb_fsm_next_w;	
   end
