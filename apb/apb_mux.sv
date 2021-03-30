@@ -36,6 +36,12 @@ output xbus_wr;
 output [7:0] xbus_din;
 input [7:0] xbus_dout;
 
+reg [7:0] i2c_xbus_dout;
+reg [7:0] otp_xbus_dout;
+reg [6:0] xbus_addr;
+reg xbus_wr;
+reg [7:0] xbus_din;
+
 reg i2c_busy_temp1;		// sync reg for i_i2c_busy
 reg i2c_busy_temp2;		// sync reg for i_i2c_busy
 
@@ -84,7 +90,7 @@ always @(*)
 			else 
 				apb_fsm_next_s = IDLE;
 		OTP_ACCESS: if ((otp_busy == 0) && (i2c_busy_temp2 == 0)) 
-				apb_fsm_next_s == IDLE;
+				apb_fsm_next_s = IDLE;
 			else 
 				apb_fsm_next_s = OTP_ACCESS;
 		I2C_ACCESS: if (i2c_busy_temp2 == 0) 
