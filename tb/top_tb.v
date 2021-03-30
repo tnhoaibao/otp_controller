@@ -40,7 +40,7 @@ wire o_otp_vddqsw;
 wire o_otp_csb;
 wire o_otp_strobe;
 wire o_otp_load;
-wire o_otp_addr;
+wire [9:0] o_otp_addr;
 wire o_otp_pgenb;
 
 wire i2c_active;
@@ -146,6 +146,7 @@ initial begin
   i2c_sda_i = 1'b1;
   m_i2c_addr = 7'h0A;
   i2c_addr_inv = 1'b1;
+  hif_idle = 1'b1;
 end
 
 // data from register file

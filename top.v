@@ -64,7 +64,7 @@ output o_otp_csb;
 output o_otp_strobe;
 output o_otp_load;
 input [7:0] i_otp_q;
-output o_otp_addr;
+output [9:0] o_otp_addr;
 output o_otp_pgenb;
 //for dft implement
 input scan_en;
@@ -104,7 +104,7 @@ wire otp_xbus_wr;
 wire rcm_sys_clk;
 
 wire otp_done = ~otp_busy_w;
-wire i2c_busy_w = ~hif_idle;
+wire i2c_busy_w = 1'b0;
 
 // Instantiate i2c top module
 i2c_top i2c_top_i (
@@ -162,7 +162,7 @@ apb_mux apb_mux_i (
 otp_main otp_main_i (
 .sys_clk			(rcm_sys_clk		),
 .rst_n				(rst_n				),
-.i_i2c_busy			(i_i2c_busy			),
+.i_i2c_busy			(i2c_busy_w			),
 .i_run_test_mode	(i_run_test_mode	),
 .o_otp_vddqsw		(o_otp_vddqsw		),
 .o_otp_csb			(o_otp_csb			),
