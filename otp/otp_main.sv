@@ -24,7 +24,7 @@ module otp_main (
 	);
 
 parameter num_of_reg = 100; //number of registers will be loaded into otp memory
-parameter [6:0] ADDR_ARRAY [0 : num_of_reg-1] = {7'd1, 7'd2, 7'd3, 7'd4, 7'd5, 7'd6, 7'd7, 7'd8, 7'd9, 7'd10, 
+parameter [6:0] ADDR_ARRAY [0 : num_of_reg-1] = {7'd1,  7'd2,  7'd3,  7'd4,  7'd5,  7'd6,  7'd7,  7'd8,  7'd9,  7'd10, 
 												 7'd11, 7'd12, 7'd13, 7'd14, 7'd15, 7'd16, 7'd17, 7'd18, 7'd19, 7'd20,
 												 7'd21, 7'd22, 7'd23, 7'd24, 7'd25, 7'd26, 7'd27, 7'd28, 7'd29, 7'd30,
 												 7'd31, 7'd32, 7'd33, 7'd34, 7'd35, 7'd36, 7'd37, 7'd38, 7'd39, 7'd40,
