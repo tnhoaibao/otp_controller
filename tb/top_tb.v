@@ -22,6 +22,8 @@ reg i2c_rst_n;
 reg i2c_wd_en_n;
 reg i2c_wd_sel;
 
+reg scan_en;
+reg scan_clk;
 reg i2c_scl_clk;
 reg i2c_scl_n_clk;
 reg i2c_active_rst_n;
@@ -117,17 +119,33 @@ initial begin
   i_run_test_mode = 1'b1;
 end
 
+// i_run_test_mode
+initial begin
+  i_otp_prog = 1'b0;
+  #40000;
+  i_otp_prog = 1'b1;
+end
+
 // PGM (no reading) operation
 initial begin
   i_otp_read_n = 1'b1;
-  #40;
-  i_otp_read_n = 1'b1;
-end
-
-initial begin
-  i_otp_prog = 1'b0;
-  #40;
-  i_otp_prog = 1'b1;
+  scan_en = 1'b0;
+  scan_clk = 1'b0;
+  i2c_sda_clk = 1'b1;
+  i2c_sda_n_clk = 1'b0;
+  i2c_scl = 1'b1;
+  slow_clk = 1'b0;
+  i2c_stop_rst_n = 1'b1;
+  i2c_scl_rst_n = 1'b1;
+  i2c_rst_n = 1'b1;
+  i2c_wd_en_n = 1'b1;
+  i2c_wd_sel = 1'b1;
+  i2c_scl_clk = 1'b1;
+  i2c_scl_n_clk = 1'b0;
+  i2c_active_rst_n = 1'b1;
+  i2c_sda_i = 1'b1;
+  m_i2c_addr = 7'h0A;
+  i2c_addr_inv = 1'b1;
 end
 
 // data from register file

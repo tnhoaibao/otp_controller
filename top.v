@@ -187,7 +187,7 @@ otp_rcm otp_rcm_i (
 .otp_busy			(otp_busy_w			),
 .scan_en			(scan_en			),
 .scan_clk			(scan_clk			),
-.i2c_clk			(i2c_reg_file_clk	),	//register file clock generated from pure rcm module
+.i2c_clk			(i2c_scl			),	//register file clock generated from pure rcm module
 .sys_clk			(sys_clk			),
 .rst_n				(rst_n				),
 .rcm_reg_clk		(reg_file_clk		),

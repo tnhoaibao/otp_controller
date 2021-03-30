@@ -221,7 +221,10 @@ always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0)
 	  efuse_no_bitline_r <= 0;
-	else if (efuse_fsm_r == MAIN_PGM) begin
+	else if (efuse_fsm_r == MAIN_READ) begin
+	  if (fsm_cnt_r == 3) efuse_no_bitline_r <= efuse_no_bitline_next_w;
+	  else efuse_no_bitline_r <= efuse_no_bitline_r;
+	end else if (efuse_fsm_r == MAIN_PGM) begin
 	  if (fsm_cnt_r == TPGM) efuse_no_bitline_r <= efuse_no_bitline_next_w;
 	  else efuse_no_bitline_r <= efuse_no_bitline_r;
 	end else efuse_no_bitline_r <= 0;

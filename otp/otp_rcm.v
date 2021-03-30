@@ -85,16 +85,16 @@ assign en_i2c_clk = en_i2c_clk_r2;
  // synopsys dc_script_end 
  
 // implement clock gate
-CKLNQD8  CLOCK_GTATE_SYS_CLK (	
+CKLHQD8  CLOCK_GTATE_SYS_CLK (	
 				.E(en_sys_clk),  //clock gate for sys_clk
 				.TE(scan_en), 
-				.CP(sys_clk), 
+				.CPN(sys_clk), 
 				.Q(sys_clk_cg));
 
-CKLNQD8 CLOCK_GATE_I2C_CLK (	
+CKLHQD8 CLOCK_GATE_I2C_CLK (	
 				.E(en_i2c_clk), //clock gate for i2c_clk
 				.TE(scan_en),
-				.CP(i2c_clk),
+				.CPN(i2c_clk),
 				.Q(i2c_clk_cg));
 
 OR2D4 OR_REG_CLK (	
