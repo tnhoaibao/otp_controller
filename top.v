@@ -11,7 +11,7 @@ module top (
 	i_run_test_mode,//input signal indicates that usb chip is in test mode or not, 1-test mode, 0-normal mode
 	i_otp_read_n,	//enable read mode of efuse controller, active low
 	i_otp_prog,		//enable program mode of efuse controller
-	reg_file_clkm	// clock for reg file, either i2c clock scl or system clock
+	reg_file_clk,	// clock for reg file, either i2c clock scl or system clock
 	//sent/received to/from otp memory
 	o_otp_vddqsw,	//enable high voltage LDO for efuse programming, disable for read
 	o_otp_csb,		//otp select enable, active low for programming/reading
@@ -49,7 +49,7 @@ module top (
 
 input sys_clk;
 input rst_n;
-
+//sent/received to/from register file
 output [6:0] xbus_addr;
 output [7:0] xbus_din;
 input [7:0] xbus_dout;
@@ -57,7 +57,8 @@ output xbus_wr;
 input i_run_test_mode;
 input i_otp_prog;
 input i_otp_read_n;
-
+output reg_file_clk;
+//sent/received to/from otp memory
 output o_otp_vddqsw;
 output o_otp_csb;
 output o_otp_strobe;
@@ -65,7 +66,10 @@ output o_otp_load;
 input [7:0] i_otp_q;
 output o_otp_addr;
 output o_otp_pgenb;
-
+//for dft implement
+input scan_en;
+input scan_clk;
+//sent/received to/from i2c interface or correspoding module
 input i2c_sda_clk;
 input i2c_sda_n_clk;
 input i2c_scl;
