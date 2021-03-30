@@ -63,20 +63,18 @@ output o_xbus_wr;
 
 output o_otp_busy;
 
-reg [1:0] fsm_rd_cnt_r;			//up counter for *_read state
-wire [1:0] fsm_rd_cnt_next_w;	
+reg i2c_busy_temp1;		// sync reg for i_i2c_busy
+reg i2c_busy_temp2;		// sync reg for i_i2c_busy
 
-reg [9:0] fsm_pgm_cnt_r;		//up counter for *_pgm state
-wire [9:0] fsm_pgm_cnt_next_w;	
+reg [9:0] fsm_cnt_r;	//up counter for *_read and *_pgm state
+wire [9:0] fsm_cnt_next_w;	
 
-reg [6:0] num_reg_r;			//up counter used to count the number of register access in program/read mode, a transaction will be done if num_reg_r = num_of_reg
+reg [6:0] num_reg_r;	//up counter used to count the number of register access in program/read mode, a transaction will be done if num_reg_r = num_of_reg
 wire [6:0] num_reg_w; 
 
-reg [2:0] efuse_bitline_r; 		//up counter for bit line			//efuse_addr = {efuse_wordline_r,efuse_bitline_r,efuse_no_bitline_r}
-wire [2:0] efuse_bitline_next_w;
-reg [3:0] efuse_wordline_r;		//up counter for word line
-wire [3:0] efuse_wordline_next_w;
-reg [2:0] efuse_no_bitline_r;	//up counter for the bit order
+reg [6:0] efuse_byte_addr_r; 		//up counter for byte address = bit line + word line	
+wire [6:0] efuse_byte_addr_next_w;	//efuse_addr = {efuse_no_bitline_r,efuse_byte_addr_r}
+reg [2:0] efuse_no_bitline_r;		//up counter for the bit order
 wire [2:0] efuse_no_bitline_next_w;
 
 reg [7:0] xbus_addr_r;	//register address access to reg file
@@ -127,35 +125,35 @@ always @(*)
     else begin
       case (efuse_fsm_r)
 		IDLE: efuse_fsm_next_s = WAIT_I2C;
-		WAIT_I2C: if ((i2c_busy_temp2 == 0) && (i_otp_prog == 1))
+		WAIT_I2C: if ((i2c_busy_temp2 == 1'b0) && (i_otp_prog == 1'b1))
 						efuse_fsm_next_s = START_PGM;
-					else if ((i2c_busy_temp2 == 0) && (i_otp_read_n == 0)) 
+					else if ((i2c_busy_temp2 == 1'b0) && (i_otp_read_n == 1'b0)) 
 						efuse_fsm_next_s = START_READ;
-					else if (i2c_busy_temp2 == 1) 
+					else if (i2c_busy_temp2 == 1'b1) 
 						efuse_fsm_next_s = IDLE;
 					else 
 						efuse_fsm_next_s = WAIT_I2C;
-		START_READ: if (fsm_rd_cnt_r == 1) 
+		START_READ: if (fsm_cnt_r == 1) 
 						efuse_fsm_next_s = MAIN_READ;
 					else
 						efuse_fsm_next_s = START_READ;
-		MAIN_READ:  if ((num_reg_r == (num_of_reg - 1)) && (fsm_rd_cnt_r == 3)) 
+		MAIN_READ:  if ((num_reg_r == (num_of_reg - 1)) && (fsm_cnt_r == 3)) 
 						efuse_fsm_next_s = FINISH_READ;
 					else
 						efuse_fsm_next_s = MAIN_READ;
-		FINISH_READ: if (fsm_rd_cnt_r == 1) 
+		FINISH_READ: if (fsm_cnt_r == 1) 
 						efuse_fsm_next_s = IDLE;
 					else
 						efuse_fsm_next_s = FINISH_READ;
-		START_PGM: if (fsm_pgm_cnt_r == 3) 
+		START_PGM: if (fsm_cnt_r == 3) 
 						efuse_fsm_next_s = MAIN_PGM;
 					else
 						efuse_fsm_next_s = START_PGM;
-		MAIN_PGM: if ((num_reg_r == (num_of_reg - 1)) && (fsm_pgm_cnt_r == TPGM)) 
+		MAIN_PGM: if ((num_reg_r == (num_of_reg - 1)) && (fsm_cnt_r == TPGM)) 
 						efuse_fsm_next_s = FINISH_PGM;
 					else 
 						efuse_fsm_next_s = MAIN_PGM;
-		FINISH_PGM: if (fsm_pgm_cnt_r == 3) 
+		FINISH_PGM: if (fsm_cnt_r == 3) 
 						efuse_fsm_next_s = IDLE;
 					else
 						efuse_fsm_next_s = FINISH_PGM;
@@ -164,83 +162,59 @@ always @(*)
     end
   end
 
+// up counter
 // counter for start_read, main_read and finish_read states
 // maximum count for start_read is 1 (SUR_V timing)
 // maximum count for main_read is 3 (RD timing + 1 clock for waiting)
 // maximum count for finish_read is 1 (HP_V timing)
-always @(posedge sys_clk or negedge rst_n)
-  begin
-    if (rst_n == 0) 
-	  fsm_rd_cnt_r <= 0;
-	else if (efuse_fsm_r == START_READ) begin
-	  if (fsm_rd_cnt_next_w == 2) fsm_rd_cnt_r <= 0;
-	  else fsm_rd_cnt_r <= fsm_rd_cnt_next_w;
-	end else if (efuse_fsm_r == MAIN_READ) begin
-	  if (fsm_rd_cnt_next_w == 4) fsm_rd_cnt_r <= 0;
-	  else fsm_rd_cnt_r <= fsm_rd_cnt_next_w;
-	end else if (efuse_fsm_r == FINISH_READ) begin
-	  if (fsm_rd_cnt_next_w == 2) fsm_rd_cnt_r <= 0;
-	  else fsm_rd_cnt_r <= fsm_rd_cnt_next_w;
-	end else fsm_rd_cnt_r <= 0;
-  end
-
-assign fsm_rd_cnt_next_w = fsm_rd_cnt_r + 1;
-
 // use only 1 up counter for start_pgm, main_pgm and finish_pgm states 
 // maximum count for start_pgm is 3 (SUP_PG timing)
 // maximum count for main_pgm is 1000 (PGM timing)
 // maximum count for finish_pgm is 3 (HP_PG timing)
 always @(posedge sys_clk or negedge rst_n)
   begin
-    if (rst_n == 0) 
-	  fsm_pgm_cnt_r <= 0;
-	else if (efuse_fsm_r == START_PGM) begin
-	  if (fsm_pgm_cnt_next_w == 4) fsm_pgm_cnt_r <= 0;
-	  else fsm_pgm_cnt_r <= fsm_pgm_cnt_next_w;
+    if (rst_n == 0)
+      fsm_cnt_r <= 0;
+    else if (efuse_fsm_r == START_READ) begin
+	  if (fsm_cnt_next_w == 2) fsm_cnt_r <= 0;
+	  else fsm_cnt_r <= fsm_cnt_next_w;
+	end else if (efuse_fsm_r == MAIN_READ) begin
+	  if (fsm_cnt_next_w == 4) fsm_cnt_r <= 0;
+	  else fsm_cnt_r <= fsm_cnt_next_w;
+	end else if (efuse_fsm_r == FINISH_READ) begin
+	  if (fsm_cnt_next_w == 2) fsm_cnt_r <= 0;
+	  else fsm_cnt_r <= fsm_cnt_next_w;
+	end else if (efuse_fsm_r == START_PGM) begin
+	  if (fsm_cnt_next_w == 4) fsm_cnt_r <= 0;
+	  else fsm_cnt_r <= fsm_cnt_next_w;
 	end else if (efuse_fsm_r == MAIN_PGM) begin
-	  if (fsm_pgm_cnt_next_w == (TPGM + 1)) fsm_pgm_cnt_r <= 0;
-	  else fsm_pgm_cnt_r <= fsm_pgm_cnt_next_w;
+	  if (fsm_cnt_next_w == (TPGM + 1)) fsm_cnt_r <= 0;
+	  else fsm_cnt_r <= fsm_cnt_next_w;
 	end else if (efuse_fsm_r == FINISH_PGM) begin
-	  if (fsm_pgm_cnt_next_w == 4) fsm_pgm_cnt_r <= 0;
-	  else fsm_pgm_cnt_r <= fsm_pgm_cnt_next_w;
-	end else fsm_pgm_cnt_r <= 0;
+	  if (fsm_cnt_next_w == 4) fsm_cnt_r <= 0;
+	  else fsm_cnt_r <= fsm_cnt_next_w;
+	end else fsm_cnt_r <= 0;
   end
 
-assign fsm_pgm_cnt_next_w = fsm_pgm_cnt_r + 1;
+assign fsm_cnt_next_w = fsm_cnt_r + 1;
 
 // generate address to access otp memory
 // otp memory address includes: 4 bits for Word line (efuse_wordline_r), 3 bits for Bit line (efuse_bitline_r) and 3 bits for the order of bit (efuse_no_bitline_r)
-// 4 bits for Word line
+// combine 4 bits for Word line + 3 bits for Bit line = efuse_byte_addr_r
 always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0)
-	  efuse_wordline_r <= 0;
+	  efuse_byte_addr_r <= 0;
 	else if (efuse_fsm_r == MAIN_READ) begin
-	  if ((efuse_bitline_r == 7) && (efuse_no_bitline_r == 7) && (fsm_rd_cnt_r == 3)) efuse_wordline_r <= efuse_wordline_next_w;
-	  else efuse_wordline_r <= efuse_wordline_r;
+	  if ((efuse_no_bitline_r == 7) && (fsm_cnt_r == 3)) efuse_byte_addr_r <= efuse_byte_addr_next_w;
+	  else efuse_byte_addr_r <= efuse_byte_addr_r;
 	end else if ( efuse_fsm_r == MAIN_PGM) begin
-	  if ((efuse_bitline_r == 7) && (efuse_no_bitline_r == 7) && (fsm_pgm_cnt_r == TPGM)) efuse_wordline_r <= efuse_wordline_next_w;
-	  else efuse_wordline_r <= efuse_wordline_r;
-	end else efuse_wordline_r <= 0;
+	  if ((efuse_no_bitline_r == 7) && (fsm_cnt_r == TPGM)) efuse_byte_addr_r <= efuse_byte_addr_next_w;
+	  else efuse_byte_addr_r <= efuse_byte_addr_r;
+	end else efuse_byte_addr_r <= 0;
   end
  
-assign efuse_wordline_next_w = efuse_wordline_r + 1;
-
-// 3 bits for Bit line
-always @(posedge sys_clk or negedge rst_n)
-  begin
-    if (rst_n == 0) 
-	  efuse_bitline_r <= 0;
-    else if (efuse_fsm_r == MAIN_READ) begin
-      if (fsm_rd_cnt_r == 3) efuse_bitline_r <= efuse_bitline_next_w;
-      else efuse_bitline_r <= efuse_bitline_r;
-	end else if (efuse_fsm_r == MAIN_PGM) begin
-	  if ((fsm_pgm_cnt_r == TPGM) && (efuse_no_bitline_r == 7)) efuse_bitline_r <= efuse_bitline_next_w;
-	  else efuse_bitline_r <= efuse_bitline_r;
-    end else efuse_bitline_r <= 0; 
-  end
-
-assign efuse_bitline_next_w = efuse_bitline_r + 1;
+assign efuse_byte_addr_next_w = efuse_byte_addr_r + 1;
 
 // 3 bits for the order of bit
 always @(posedge sys_clk or negedge rst_n)
@@ -248,13 +222,13 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0)
 	  efuse_no_bitline_r <= 0;
 	else if (efuse_fsm_r == MAIN_PGM) begin
-	  if (fsm_pgm_cnt_r == TPGM) efuse_no_bitline_r <= efuse_no_bitline_next_w;
+	  if (fsm_cnt_r == TPGM) efuse_no_bitline_r <= efuse_no_bitline_next_w;
 	  else efuse_no_bitline_r <= efuse_no_bitline_r;
 	end else efuse_no_bitline_r <= 0;
   end
   
  assign efuse_no_bitline_next_w = efuse_no_bitline_r + 1;
- assign o_otp_addr = {efuse_wordline_r,efuse_bitline_r,efuse_no_bitline_r};
+ assign o_otp_addr = {efuse_no_bitline_r,efuse_byte_addr_r};
 
 // generate xbus_addr to access register file (in read mode)
 // load data from otp mem valid legally at falling edge of otp_strobe
@@ -267,7 +241,7 @@ always @(posedge sys_clk or negedge rst_n)
       xbus_addr_r <= ADDR_ARRAY[0];
 	  num_reg_r <= 0;
     end else if (efuse_fsm_r == MAIN_PGM) begin
-      if ((fsm_pgm_cnt_r == TPGM) && (efuse_no_bitline_r == 3'b111)) begin 
+      if ((fsm_cnt_r == TPGM) && (efuse_no_bitline_r == 3'b111)) begin 
 	    xbus_addr_r <= xbus_addr_next_w;
 		num_reg_r <= num_reg_w;
       end else begin
@@ -275,7 +249,7 @@ always @(posedge sys_clk or negedge rst_n)
 		num_reg_r <= num_reg_r;
 	  end
     end else if (efuse_fsm_r == MAIN_READ) begin
-      if (fsm_rd_cnt_r == 3) begin
+      if (fsm_cnt_r == 3) begin
 	    xbus_addr_r <= xbus_addr_rd_next_w;
 		num_reg_r <= num_reg_w;
       end else begin
@@ -304,13 +278,13 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0)
       efuse_csb_r <= 1'b1;
     else if (efuse_fsm_r == START_PGM) begin
-      if (fsm_pgm_cnt_r == 2) efuse_csb_r <= 1'b0;
+      if (fsm_cnt_r == 2) efuse_csb_r <= 1'b0;
 	end else if (efuse_fsm_r == FINISH_PGM) begin
-	  if (fsm_pgm_cnt_r == 0) efuse_csb_r <= 1'b1;
+	  if (fsm_cnt_r == 0) efuse_csb_r <= 1'b1;
     end else if (efuse_fsm_r == START_READ) begin
-      if (fsm_rd_cnt_r == 0) efuse_csb_r <= 1'b0;
+      if (fsm_cnt_r == 0) efuse_csb_r <= 1'b0;
 	end else if (efuse_fsm_r == FINISH_READ) begin
-	  if (fsm_rd_cnt_r == 0) efuse_csb_r <= 1'b1;
+	  if (fsm_cnt_r == 0) efuse_csb_r <= 1'b1;
     end else if (efuse_fsm_r == IDLE) begin
       efuse_csb_r <= 1'b1;
     end else efuse_csb_r <= efuse_csb_r;
@@ -328,12 +302,12 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0)
       efuse_strobe_r <= 1'b0;
     else if (efuse_fsm_r == MAIN_PGM) begin
-	  if (fsm_pgm_cnt_r == 0) efuse_strobe_r <= i_xbus_dout[efuse_no_bitline_r];
-	  else if (fsm_pgm_cnt_r == TPGM) efuse_strobe_r <= 1'b0;
+	  if (fsm_cnt_r == 0) efuse_strobe_r <= i_xbus_dout[efuse_no_bitline_r];
+	  else if (fsm_cnt_r == TPGM) efuse_strobe_r <= 1'b0;
 	  else efuse_strobe_r <= efuse_strobe_r;
 	end else if (efuse_fsm_r == MAIN_READ) begin
-	  if (fsm_rd_cnt_r == 0) efuse_strobe_r <= 1'b1;
-	  else if (fsm_rd_cnt_r == 3) efuse_strobe_r <= 1'b0;
+	  if (fsm_cnt_r == 0) efuse_strobe_r <= 1'b1;
+	  else if (fsm_cnt_r == 3) efuse_strobe_r <= 1'b0;
 	  else efuse_strobe_r <= efuse_strobe_r;
 	end else efuse_strobe_r <= 1'b0;
   end
@@ -348,10 +322,10 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0)
 	  efuse_load_r <= 1'b0;
 	else if (efuse_fsm_r == START_READ) begin
-	  if (fsm_rd_cnt_r == 0) efuse_load_r <= ~efuse_load_r;
+	  if (fsm_cnt_r == 0) efuse_load_r <= ~efuse_load_r;
 	  else efuse_load_r <= efuse_load_r;
 	end else if (efuse_fsm_r == FINISH_READ) begin 
-	  if (fsm_rd_cnt_r == 0) efuse_load_r <= ~efuse_load_r;
+	  if (fsm_cnt_r == 0) efuse_load_r <= ~efuse_load_r;
 	  else efuse_load_r <= efuse_load_r;
 	end else if (efuse_fsm_r == MAIN_READ) efuse_load_r <= efuse_load_r;
 	else efuse_load_r <= 1'b0;
@@ -381,10 +355,10 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0)
       efuse_vddq_r <= 1'b0;
 	else if (efuse_fsm_r == START_PGM) begin
-	  if (fsm_pgm_cnt_r == 0) efuse_vddq_r <= 1'b1;
+	  if (fsm_cnt_r == 0) efuse_vddq_r <= 1'b1;
 	  else efuse_vddq_r <= efuse_vddq_r;
     end else if (efuse_fsm_r == FINISH_PGM) begin
-	  if (fsm_pgm_cnt_r == 2) efuse_vddq_r <= 1'b0;
+	  if (fsm_cnt_r == 2) efuse_vddq_r <= 1'b0;
 	  else efuse_vddq_r <= efuse_vddq_r;
 	end else if (efuse_fsm_r == MAIN_PGM) begin
       efuse_vddq_r <= 1'b1;
@@ -402,7 +376,7 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0) begin
       xbus_din_r <= 8'h00;
     end else if (efuse_fsm_r == MAIN_READ) begin
-	  if (fsm_rd_cnt_r == 3) xbus_din_r <= i_otp_q;
+	  if (fsm_cnt_r == 3) xbus_din_r <= i_otp_q;
 	  else xbus_din_r <= xbus_din_r;
 	end else if (efuse_fsm_r == FINISH_READ) xbus_din_r <= xbus_din_r;
 	else xbus_din_r <= 8'h00;
