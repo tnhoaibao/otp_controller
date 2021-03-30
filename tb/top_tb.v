@@ -5,8 +5,30 @@ module top_tb;
 reg sys_clk;
 reg rst_n;
 
-reg i_i2c_busy;
+reg [7:0] xbus_dout;
+reg i_otp_prog;
+reg i_otp_read_n;
 reg i_run_test_mode;
+
+reg [7:0] i_otp_q;
+
+reg i2c_sda_clk;
+reg i2c_sda_n_clk;
+reg i2c_scl;
+reg slow_clk;
+reg i2c_stop_rst_n;
+reg i2c_scl_rst_n;
+reg i2c_rst_n;
+reg i2c_wd_en_n;
+reg i2c_wd_sel;
+
+reg i2c_scl_clk;
+reg i2c_scl_n_clk;
+reg i2c_active_rst_n;
+reg i2c_sda_i;
+
+reg [6:0] m_i2c_addr;
+reg i2c_addr_inv;
 
 wire o_otp_vddqsw;
 wire o_otp_csb;
