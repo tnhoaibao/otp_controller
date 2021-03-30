@@ -58,55 +58,6 @@ module CKLNQD8 (TE, E, CP, Q);
   `else
   `endif
 
-
-
-  // Timing logics defined for default constraint check
-  `ifdef NTC
-    not  (E_int_not, E_d);
-    not  (TE_int_not, TE_d);
-  `else
-    not  (E_int_not, E);
-    not  (TE_int_not, TE);
-  `endif
-    buf  (E_check, TE_int_not);
-  buf  (TE_check, E_int_not);
-  `ifdef TETRAMAX
-  `else
-    tsmc_xbuf (E_DEFCHK, E_check, 1'b1);
-    tsmc_xbuf (TE_DEFCHK, TE_check, 1'b1);
-  `endif
-
-  `ifdef TETRAMAX
-  `else
-  specify
-    if (E == 1'b1 && TE == 1'b1)
-    (CP => Q) = (0, 0);
-    if (E == 1'b1 && TE == 1'b0)
-    (CP => Q) = (0, 0);
-    if (E == 1'b0 && TE == 1'b1)
-    (CP => Q) = (0, 0);
-    if (E == 1'b0 && TE == 1'b0)
-    (negedge CP => (Q+:1'b0)) = (0, 0);
-    ifnone (CP => Q) = (0, 0);
-    $width (posedge CP, 0, 0, notifier);
-    $width (negedge CP, 0, 0, notifier);
-  `ifdef NTC
-    $setuphold (posedge CP &&& E_DEFCHK, posedge E, 0, 0, notifier,,, CP_d, E_d);
-    $setuphold (posedge CP &&& E_DEFCHK, negedge E, 0, 0, notifier,,, CP_d, E_d);
-    $setuphold (posedge CP &&& TE_DEFCHK, posedge TE, 0, 0, notifier,,, CP_d, TE_d);
-    $setuphold (posedge CP &&& TE_DEFCHK, negedge TE, 0, 0, notifier,,, CP_d, TE_d);
-  `else
-    $setuphold (posedge CP &&& E_DEFCHK, posedge E, 0, 0, notifier);
-    $setuphold (posedge CP &&& E_DEFCHK, negedge E, 0, 0, notifier);
-    $setuphold (posedge CP &&& TE_DEFCHK, posedge TE, 0, 0, notifier);
-    $setuphold (posedge CP &&& TE_DEFCHK, negedge TE, 0, 0, notifier);
-  `endif
-  endspecify
-  `endif
-endmodule
-`endcelldefine
-
-
 `celldefine
 module CKLHQD8 ( Q, TE, CPN, E );
     input TE, CPN, E;
@@ -183,6 +134,51 @@ module CKLHQD8 ( Q, TE, CPN, E );
 endmodule
 `endcelldefine
 
+  // Timing logics defined for default constraint check
+  `ifdef NTC
+    not  (E_int_not, E_d);
+    not  (TE_int_not, TE_d);
+  `else
+    not  (E_int_not, E);
+    not  (TE_int_not, TE);
+  `endif
+    buf  (E_check, TE_int_not);
+  buf  (TE_check, E_int_not);
+  `ifdef TETRAMAX
+  `else
+    tsmc_xbuf (E_DEFCHK, E_check, 1'b1);
+    tsmc_xbuf (TE_DEFCHK, TE_check, 1'b1);
+  `endif
+
+  `ifdef TETRAMAX
+  `else
+  specify
+    if (E == 1'b1 && TE == 1'b1)
+    (CP => Q) = (0, 0);
+    if (E == 1'b1 && TE == 1'b0)
+    (CP => Q) = (0, 0);
+    if (E == 1'b0 && TE == 1'b1)
+    (CP => Q) = (0, 0);
+    if (E == 1'b0 && TE == 1'b0)
+    (negedge CP => (Q+:1'b0)) = (0, 0);
+    ifnone (CP => Q) = (0, 0);
+    $width (posedge CP, 0, 0, notifier);
+    $width (negedge CP, 0, 0, notifier);
+  `ifdef NTC
+    $setuphold (posedge CP &&& E_DEFCHK, posedge E, 0, 0, notifier,,, CP_d, E_d);
+    $setuphold (posedge CP &&& E_DEFCHK, negedge E, 0, 0, notifier,,, CP_d, E_d);
+    $setuphold (posedge CP &&& TE_DEFCHK, posedge TE, 0, 0, notifier,,, CP_d, TE_d);
+    $setuphold (posedge CP &&& TE_DEFCHK, negedge TE, 0, 0, notifier,,, CP_d, TE_d);
+  `else
+    $setuphold (posedge CP &&& E_DEFCHK, posedge E, 0, 0, notifier);
+    $setuphold (posedge CP &&& E_DEFCHK, negedge E, 0, 0, notifier);
+    $setuphold (posedge CP &&& TE_DEFCHK, posedge TE, 0, 0, notifier);
+    $setuphold (posedge CP &&& TE_DEFCHK, negedge TE, 0, 0, notifier);
+  `endif
+  endspecify
+  `endif
+endmodule
+`endcelldefine
 
 `celldefine
 module OR2D4 (A1, A2, Z);
