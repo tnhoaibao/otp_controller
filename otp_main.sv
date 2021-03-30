@@ -93,7 +93,19 @@ reg xbus_wr_r;
 
 // define states in fsm
 typedef enum {IDLE, WAIT_I2C, START_READ, MAIN_READ, FINISH_READ, START_PGM, MAIN_PGM, FINISH_PGM} efuse_fsm_t;
-efuse_fsm_t efuse_fsm_r, efuse_fsm_next_w;
+efuse_fsm_t efuse_fsm_r, efuse_fsm_next_s;
+
+// synchronize i_i2c_busy to sys_clk
+always @(posedge sys_clk or negedge rst_n)
+  begin
+    if (rst_n == 0) begin
+	  i2c_busy_temp1 <= 1'b0;
+	  i2c_busy_temp2 <= 1'b0;
+	end else begin
+	  i2c_busy_temp1 <= i_i2c_busy;
+	  i2c_busy_temp2 <= i2c_busy_temp1;
+	end
+  end
 
 // implement fsm for otp controller
 // specification v1.1
@@ -105,49 +117,49 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0)
       efuse_fsm_r <= START_READ;
     else
-      efuse_fsm_r <= efuse_fsm_next_w;
+      efuse_fsm_r <= efuse_fsm_next_s;
   end
 
 always @(*)
   begin
     if ((i_run_test_mode == 0) && (efuse_fsm_r != START_READ)) 
-      efuse_fsm_next_w = IDLE;
+      efuse_fsm_next_s = IDLE;
     else begin
       case (efuse_fsm_r)
-		IDLE: efuse_fsm_next_w = WAIT_I2C;
-		WAIT_I2C: if ((i_i2c_busy == 0) && (i_otp_prog == 1))
-						efuse_fsm_next_w = START_PGM;
-					else if ((i_i2c_busy == 0) && (i_otp_read_n == 0)) 
-						efuse_fsm_next_w = START_READ;
-					else if (i_i2c_busy == 1) 
-						efuse_fsm_next_w = IDLE;
+		IDLE: efuse_fsm_next_s = WAIT_I2C;
+		WAIT_I2C: if ((i2c_busy_temp2 == 0) && (i_otp_prog == 1))
+						efuse_fsm_next_s = START_PGM;
+					else if ((i2c_busy_temp2 == 0) && (i_otp_read_n == 0)) 
+						efuse_fsm_next_s = START_READ;
+					else if (i2c_busy_temp2 == 1) 
+						efuse_fsm_next_s = IDLE;
 					else 
-						efuse_fsm_next_w = WAIT_I2C;
+						efuse_fsm_next_s = WAIT_I2C;
 		START_READ: if (fsm_rd_cnt_r == 1) 
-						efuse_fsm_next_w = MAIN_READ;
+						efuse_fsm_next_s = MAIN_READ;
 					else
-						efuse_fsm_next_w = START_READ;
+						efuse_fsm_next_s = START_READ;
 		MAIN_READ:  if ((num_reg_r == (num_of_reg - 1)) && (fsm_rd_cnt_r == 3)) 
-						efuse_fsm_next_w = FINISH_READ;
+						efuse_fsm_next_s = FINISH_READ;
 					else
-						efuse_fsm_next_w = MAIN_READ;
+						efuse_fsm_next_s = MAIN_READ;
 		FINISH_READ: if (fsm_rd_cnt_r == 1) 
-						efuse_fsm_next_w = IDLE;
+						efuse_fsm_next_s = IDLE;
 					else
-						efuse_fsm_next_w = FINISH_READ;
+						efuse_fsm_next_s = FINISH_READ;
 		START_PGM: if (fsm_pgm_cnt_r == 3) 
-						efuse_fsm_next_w = MAIN_PGM;
+						efuse_fsm_next_s = MAIN_PGM;
 					else
-						efuse_fsm_next_w = START_PGM;
+						efuse_fsm_next_s = START_PGM;
 		MAIN_PGM: if ((num_reg_r == (num_of_reg - 1)) && (fsm_pgm_cnt_r == TPGM)) 
-						efuse_fsm_next_w = FINISH_PGM;
+						efuse_fsm_next_s = FINISH_PGM;
 					else 
-						efuse_fsm_next_w = MAIN_PGM;
+						efuse_fsm_next_s = MAIN_PGM;
 		FINISH_PGM: if (fsm_pgm_cnt_r == 3) 
-						efuse_fsm_next_w = IDLE;
+						efuse_fsm_next_s = IDLE;
 					else
-						efuse_fsm_next_w = FINISH_PGM;
-		default: efuse_fsm_next_w = IDLE;
+						efuse_fsm_next_s = FINISH_PGM;
+		default: efuse_fsm_next_s = IDLE;
       endcase
     end
   end
@@ -354,7 +366,7 @@ always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0)
 	  efuse_pgenb_r <= 1'b1;
-	else if ((efuse_fsm_next_w == START_PGM) || (efuse_fsm_next_w == MAIN_PGM) || (efuse_fsm_next_w == FINISH_PGM))
+	else if ((efuse_fsm_next_s == START_PGM) || (efuse_fsm_next_s == MAIN_PGM) || (efuse_fsm_next_s == FINISH_PGM))
 	  efuse_pgenb_r <= 1'b0;
 	else efuse_pgenb_r <= 1'b1;
   end
