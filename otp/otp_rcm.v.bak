@@ -1,4 +1,4 @@
-`timescale 1ns/10ps
+
 module otp_rcm (	
         i2c_busy, 	//signaling that there is i2c transaction or not
 		passcode_en,//signaling that entry test mode

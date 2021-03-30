@@ -51,7 +51,7 @@ wire hif_idle;
 
 top top_i (
 .sys_clk (sys_clk), 	
-.rst_n (rst_n)		
+.rst_n (rst_n),		
 //sent/received to/from register file
 .xbus_addr (xbus_addr),	
 .xbus_din (xbus_din),	
@@ -61,7 +61,7 @@ top top_i (
 .i_otp_read_n (i_otp_read_n),	
 .i_otp_prog (i_otp_prog),		
 .reg_file_clk (reg_file_clk),	
-.//sent/received to/from otp memory
+//sent/received to/from otp memory
 .o_otp_vddqsw (o_otp_vddqsw),	
 .o_otp_csb (o_otp_csb),		
 .o_otp_strobe (o_otp_strobe),	
@@ -110,13 +110,6 @@ initial begin
   rst_n = 1'b1;
 end
 
-// i_i2c_busy
-initial begin
-  i_i2c_busy = 1'b1;
-  #25;
-  i_i2c_busy = 1'b0;
-end
-
 // i_run_test_mode
 initial begin
   i_run_test_mode = 1'b1;
@@ -135,15 +128,6 @@ initial begin
   i_otp_prog = 1'b0;
   #40;
   i_otp_prog = 1'b1;
-end
-
-// data from register file
-always begin
-  #40;
-  i_xbus_dout = 8'h66;
-  #80;
-  i_xbus_dout = 8'h66;
-  #40;
 end
 
 // data from register file
