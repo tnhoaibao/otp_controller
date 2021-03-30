@@ -36,12 +36,27 @@ output xbus_wr;
 output [7:0] xbus_din;
 input [7:0] xbus_dout;
 
+reg i2c_busy_temp1;		// sync reg for i_i2c_busy
+reg i2c_busy_temp2;		// sync reg for i_i2c_busy
+
 input sys_clk;
 input rst_n;
 
 // define states in fsm for choosing otp or i2c interface
 typedef enum {IDLE, OTP_ACCESS, I2C_ACCESS} apb_fsm_t;
-apb_fsm_t apb_fsm_r, apb_fsm_next_w;
+apb_fsm_t apb_fsm_r, apb_fsm_next_s;
+
+// synchronize i_i2c_busy to sys_clk
+always @(posedge sys_clk or negedge rst_n)
+  begin
+    if (rst_n == 0) begin
+	  i2c_busy_temp1 <= 1'b0;
+	  i2c_busy_temp2 <= 1'b0;
+	end else begin
+	  i2c_busy_temp1 <= i2c_busy;
+	  i2c_busy_temp2 <= i2c_busy_temp1;
+	end
+  end
 
 // implement fsm for otp or i2c choosing combine with apb mux
 // specification v1.1
@@ -53,23 +68,30 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0)
       apb_fsm_r <= OTP_ACCESS;
     else
-      apb_fsm_r <= apb_fsm_next_w;	
+      apb_fsm_r <= apb_fsm_next_s;	
   end
   
 always @(*)
   begin
-    if ((otp_busy == 0) && (i2c_busy == 0))
-	  apb_fsm_next_w = IDLE;
+    if ((otp_busy == 0) && (i2c_busy_temp2 == 0))
+	  apb_fsm_next_s = IDLE;
 	else begin
       case (apb_fsm_r)
-	    IDLE: if ((otp_busy == 1) && (i2c_busy == 0)) apb_fsm_next_w = OTP_ACCESS;
-			else if ((otp_busy == 0) && (i2c_busy == 1)) apb_fsm_next_w = I2C_ACCESS;
-			else apb_fsm_next_w = IDLE;
-		OTP_ACCESS: if ((otp_busy == 0) && (i2c_busy == 0)) apb_fsm_next_w == IDLE;
-			else apb_fsm_next_w = OTP_ACCESS;
-		I2C_ACCESS: if (i2c_busy == 0) apb_fsm_next_w = IDLE;
-			else apb_fsm_next_w = I2C_ACCESS;
-		default: apb_fsm_next_w = IDLE;
+	    IDLE: if ((otp_busy == 1) && (i2c_busy_temp2 == 0)) 
+				apb_fsm_next_s = OTP_ACCESS;
+			else if ((otp_busy == 0) && (i2c_busy_temp2 == 1)) 
+				apb_fsm_next_s = I2C_ACCESS;
+			else 
+				apb_fsm_next_s = IDLE;
+		OTP_ACCESS: if ((otp_busy == 0) && (i2c_busy_temp2 == 0)) 
+				apb_fsm_next_s == IDLE;
+			else 
+				apb_fsm_next_s = OTP_ACCESS;
+		I2C_ACCESS: if (i2c_busy_temp2 == 0) 
+				apb_fsm_next_s = IDLE;
+			else 
+				apb_fsm_next_s = I2C_ACCESS;
+		default: apb_fsm_next_s = IDLE;
       endcase	  
 	end
   end
