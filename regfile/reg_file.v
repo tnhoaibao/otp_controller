@@ -1,55 +1,31 @@
 `timescale 1ns/10ps
 module reg_file (
-  rst_n, // reset signal
-  sys_clk, // system clock signal
-  reg_file_clk, // register clock synchronized with interface clock
-  shadow_reg_clk, // shadow register clock synchronized with hif idle
-  //i2c_clk_before_del,
-  i2c_clk_after_del,
-  i2c_din_before_del,
-  i2c_din_after_del,
-  i2c_dout_before_del,
-  i2c_dout_after_del,
-  xbus_addr, // address bus to access register file
-  xbus_wr, // write signal to access register file
-  xbus_din, // input data bus to access register file
-  xbus_dout, // output data bus to access register file 
-  clk_en, // Output enable crystal clock
-  power_en, // Output enable LDO
-  i2c_wd_en_n, // config bit for i2c watchdog
+  rst_n, 			// reset signal
+  sys_clk, 			// system clock signal
+  reg_file_clk, 	// register clock synchronized with interface clock
+  shadow_reg_clk, 	// shadow register clock synchronized with hif idle
+  // from apb mux, choose either otp_controller or i2c interface
+  xbus_addr, 		// address bus to access register file
+  xbus_wr, 			// write signal to access register file
+  xbus_din, 		// input data bus to access register file
+  xbus_dout, 		// output data bus to access register file 
+  clk_en, 			// Output enable crystal clock
+  power_en, 		// Output enable LDO
+  i2c_wd_en_n, 		// config bit for i2c watchdog
   i2c_wd_sel,
-  i2c_if,
-  spi_if,
-  spi3_en,
   i2c_del,
   soft_rst,
   i2c_addr,
-  reg05_wr,
-
-  adc_pulse,
-  test_mode_en, // enable test mode , REMOVE TEST_MODE_EN
-  lock,
-  start_pulse, // output start pulse to trigger AFC, RF AGC, IF AGC
-  power_gate_r, // power gate signal for AFC, AGC, IFVGA block
-  reg04_exam,
-/////////////////OSC///////////////
+  // register connect to analog/digital circuits
+  reg05_wr,			// config read/write enable for otp controller
+  reg04_exam,		// no connect to any circuits
   reg09_wr,			///
   reg11_wr,			///
-///////////////////////////////////
-
-/////////////LDO////////////////////
-				////
-  				////
   reg12_wr, //ADD		////
   reg13_wr,//ADD		////
   reg14_wr,//ADD		////
   reg15_wr,//ADD		////
   reg16_wr,//ADD		////
-  //reg121_wr,			//// 
-  //reg122_wr,			////
-////////////////////////////////////
-
-/////////////DETECTOR////////////////
   LFPS_EN_CONTROLLER,	//REG17	/////
   reg18_wr,			/////
   reg19_wr,			/////
@@ -62,9 +38,6 @@ module reg_file (
   reg26_wr,			/////
   reg27_wr,			/////
   reg28_wr,			/////
-/////////////////////////////////////
-
-//////////////////TX/////////////////////////
   EN_EMP,//REG42, ENABLE PRE-EMPHASIS	/////
   TX_EN_CONTROLLER, //REG29		/////
   reg30_wr,				/////
@@ -80,15 +53,7 @@ module reg_file (
   reg40_wr,				/////
   reg41_wr,				/////
   reg42_wr,				/////
-//reg43_wr,				/////
   SYS_IMP_EN,//REG29			/////	
-//  reg121_wr,				/////
-//  reg122_wr,				/////
-//  reg123_wr,				/////	
- // reg124_wr,				/////
-/////////////////////////////////////////////
-
-///////////////////DIGITAL/////////////////////////////////////////////////
   reg44_wr,								///
   TIME100NS_OFF,//REG45							///
   EMP_VALUE_CTRL,//REG46						///
@@ -128,9 +93,6 @@ module reg_file (
   CTR_TIMEOUT460, //REG70, TEST CHIP	
   SEL_STATE,								///
   SEL_PLUG_ATT,   							///
-///////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////RX//////////////////////////////////////
   AGC_125U_EN,								///	
   AGC_EN,								///
   TIA_ZPSW,								///
@@ -148,13 +110,8 @@ module reg_file (
   reg95_wr,								///
   MUX_GEN_V1P5, //REG96	
   PTAT_IEQ,								///
-  //PVT_ITRIM,//REG96							///
   reg97_wr,								///
   reg98_wr,								///
-  //AGC_TRIM_MAXTIA,//REG99						///
-  //AGC_TRIM_MAXEQ,//REG99						///
-  //reg100_wr,								///
-  //reg101_wr,								///
   reg102_wr,								///
   reg103_wr,								///
   reg104_wr,								///
@@ -178,65 +135,38 @@ module reg_file (
   reg118_wr,								///
   BF_RD2,//REG119							///
   BF_RD1,//REG119							///
-  reg120_wr,								///
-  /*RX*/								///								
+  reg120_wr,								///						
   reg124_wr,								///
   reg125_wr								///
- //////////////////////////////////////////////////////////////////////////
-
   );
+  
 //////////I2C//////////////////////////////
 	input rst_n;			///
 	input sys_clk;			///
 	input reg_file_clk;		///
 	input shadow_reg_clk;		///
-	//input i2c_clk_before_del;	///
-	input i2c_clk_after_del;	///
-	input i2c_din_before_del;	///
-	input i2c_din_after_del;	///
-	input i2c_dout_before_del;	///
-	input i2c_dout_after_del;	///
 	input [6:0] xbus_addr;		///
 	input xbus_wr;			///
 	input [7:0] xbus_din;		///
 	output [7:0] xbus_dout;		///
 	output clk_en;			///
-	output power_en;		///
-	output start_pulse;		///
-	output adc_pulse;		///
-	output lock;			///
+	output power_en;		///			///
 	output i2c_wd_en_n;		///
 	output i2c_wd_sel;		///
-	output i2c_if;			///
-	output spi_if;			///
-	output spi3_en;			///
 	output [3:0] i2c_del;		///
 	output soft_rst;		///
 	output [6:0] i2c_addr;		///
 	output [7:0] reg05_wr;		///
 	output [1:0] reg04_exam;	///
-					///
-	output test_mode_en; 		///
-	output power_gate_r;		///
-///////////////////////////////////////////	
-
 //////////////////OSC//////////////////////
 	output [7:0] reg09_wr;		///
 	output [3:0] reg11_wr;		///
-					///
-///////////////////////////////////////////
-
 ////////////////LDO////////////////////////
- 					///
   	output [5:0] reg12_wr; //ADD 	///
   	output [4:0] reg13_wr;//ADD	///
   	output [4:0] reg14_wr;//ADD	///
   	output [4:0] reg15_wr;//ADD	///
   	output [4:0] reg16_wr;//ADD	///
-	//output [5:0] reg121_wr;	///
-	//output [4:0] reg122_wr;	///
-///////////////////////////////////////////
-
 ////////////////DETECTOR///////////////////////////////////////////
 	output [4:0] LFPS_EN_CONTROLLER;//ON/OFF DETECTORS,LPMM ///
    	output [7:0] reg18_wr;					///
@@ -250,8 +180,6 @@ module reg_file (
   	output [7:0] reg26_wr;					///
   	output [5:0] reg27_wr;					///
   	output [7:0] reg28_wr;					///
-///////////////////////////////////////////////////////////////////
-
 /////////////////////////////TX////////////////////////////////////
 	output EN_EMP; //ENABLE PRE_EMPHASIS,REG42		///
 	output [6:0] TX_EN_CONTROLLER;//REG29			///	
@@ -268,15 +196,7 @@ module reg_file (
   	output [6:0] reg40_wr;					///
 	output [6:0] reg41_wr;					///
 	output [4:0] reg42_wr;					///
-	//output [7:0] reg43_wr;				///
 	output SYS_IMP_EN;//REG29				///
-//	output [4:0] reg121_wr;					///
-//	output [6:0] reg122_wr;					///
-//	output [6:0] reg123_wr;					///	
-	//output [3:0] reg124_wr;				///
-								///
-///////////////////////////////////////////////////////////////////
-
 /////////////////////////////DIGITAL///////////////////////////////
   	output [5:0] reg44_wr;					///
 	output [5:0] TIME100NS_OFF;				///
@@ -317,14 +237,10 @@ module reg_file (
 	output	CTR_TIMEOUT460;					///
 	output [1:0] SEL_STATE;					///
 	output [2:0] SEL_PLUG_ATT;				///
-								///
-///////////////////////////////////////////////////////////////////
-
 /////////////////////////RX///////////////////////////////////////
 	output TIA_ZPSW;					//
 	output AGC_125U_EN;					//
 	output AGC_EN;						//
-	//SW ON/OFF						//
 	output BF_1EN;						//
 	output BF_2EN;						//
 	output BF_EN660;					//
@@ -339,13 +255,8 @@ module reg_file (
   	output [5:0] reg95_wr;					//
   	output [3:0] MUX_GEN_V1P5;//REG96
 	output [2:0] PTAT_IEQ;					//
-	//output [2:0] PVT_ITRIM;//REG96			//
   	output [2:0] reg97_wr;					//
   	output [4:0] reg98_wr;					//
-  	//output [2:0] AGC_TRIM_MAXTIA;//REG99			//
-	//output [2:0] AGC_TRIM_MAXEQ; //REG99			//
-  	//output [5:0] reg100_wr;				//
-  	//output [2:0] reg101_wr;				//
   	output [5:0] reg102_wr;					//
   	output [4:0] reg103_wr;					//
   	output [4:0] reg104_wr;					//
@@ -369,14 +280,10 @@ module reg_file (
   	output [5:0] reg118_wr;					//
 	output [2:0] BF_RD2;					//
 	output [2:0] BF_RD1;					//
-	output [3:0] reg120_wr;					//
-								//
-								//																		
+	output [3:0] reg120_wr;					//																		
 	output [1:0] reg124_wr;					//
 	output [6:0] reg125_wr;					//
-								//
-//////////////////////////////////////////////////////////////////
-
+								
 	wire [6:0] i2c_addr;
 	wire [3:0] i2c_del;
 	wire clk_en;
@@ -384,15 +291,10 @@ module reg_file (
 	wire [6:0] xbus_addr;
 	wire [7:0] xbus_din;
 	reg [7:0] xbus_dout;
-	reg start_pulse;
-	reg adc_pulse;
-	reg lock;
 	reg [6:0] power_en_counter_r;
 	reg clk_en_temp;
 	reg clk_en_temp_sync1, clk_en_temp_sync2, clk_en_temp_sync3;
 	reg power_gate_r;
-	reg spi_if_temp;
-	reg i2c_if_temp;
 
 
 	wire [7:0] reg_00;
@@ -524,56 +426,24 @@ module reg_file (
 	reg [7:0] reg_126;	//dummy
 	reg soft_rst;
 
-  // assign PSV2 for 8 bytes
+  // define for CHIP ID
   assign reg_00 = 8'h50;
   assign reg_01 = 8'h53;
   assign reg_02 = 8'h56;
   assign reg_03 = 8'h32;
-  //assign reg_122 = 8'h4E;
-  //assign reg_123 = 8'h58;
-  //assign reg_124 = 8'h76;
-  //assign reg_125 = 8'h01;
-  // Implement self reset start pulse bit
-  always @ (posedge reg_file_clk or negedge rst_n)
-    if (rst_n == 1'b0)
-      start_pulse <= 1'b0;
-    else if ((xbus_wr == 1'b1) && (xbus_addr == 8'h04))
-      start_pulse <= xbus_din[5];
-    else
-      start_pulse <= 1'b0;
-
-  // Implement self reset adc pulse bit
-  always @ (posedge reg_file_clk or negedge rst_n)
-    if (rst_n == 1'b0)
-      adc_pulse <= 1'b0;
-    else if ((xbus_wr == 1'b1) && (xbus_addr == 8'h04))
-      adc_pulse <= xbus_din[6];
-    else
-      adc_pulse <= 1'b0;
-
-  always @ (posedge reg_file_clk or negedge rst_n)
-    if (rst_n == 1'b0)
-     lock <= 1'b0;
-    else if ((xbus_wr == 1'b1) && (xbus_addr == 8'h04))
-     lock <= xbus_din[4];
-    else
-     lock <= 1'b0;
 
   always @ (posedge reg_file_clk or negedge rst_n)
     begin
       if (rst_n == 1'b0)
         begin
-	  //reg_01 <= 8'hFF;
-	  //reg_02 <= 8'hFF;
-	  //reg_03 <= 8'hFF;
           reg_04 <= 4'h0;//PREVIOUS:4'h80
           reg_05 <= 8'h00;
-          reg_06 <= 8'h00;	//bao define
+          reg_06 <= 8'h00;
           reg_07 <= 8'h00;
       	  reg_08 <= 8'h0A;
           reg_09 <= 8'h78;
           reg_10 <= 8'h00;		  
-	  reg_11 <= 8'h08;
+		  reg_11 <= 8'h08;
           reg_12 <= 8'h30;
           reg_13 <= 8'h0F;
           reg_14 <= 8'h10;
@@ -588,8 +458,8 @@ module reg_file (
           reg_23 <= 8'h1B;
           reg_24 <= 8'h5A;
           reg_25 <= 8'h1B;
-	  reg_26 <= 8'h83;
-	  reg_27 <= 8'h07;
+		  reg_26 <= 8'h83;
+		  reg_27 <= 8'h07;
           reg_28 <= 8'h88;
           reg_29 <= 8'hFF;
           reg_30 <= 8'h0F;
@@ -601,18 +471,18 @@ module reg_file (
           reg_36 <= 8'h70;	
           reg_37 <= 8'h10;	   
           reg_38 <= 8'h78;
-	  reg_39 <= 8'h88;
-	  reg_40 <= 8'h5C;
+		  reg_39 <= 8'h88;
+		  reg_40 <= 8'h5C;
           reg_41 <= 8'h4C;
           reg_42 <= 8'h30;
-	  reg_43 <= 8'h00;
+		  reg_43 <= 8'h00;
           reg_44 <= 8'h1C;	
           reg_45 <= 8'h2B;
           reg_46 <= 8'h07;
           reg_47 <= 8'h27;
           reg_48 <= 8'h33;
           reg_49 <= 8'h08;
-	  reg_50 <= 8'h02;
+		  reg_50 <= 8'h02;
           reg_51 <= 8'h0C;	
           reg_52 <= 8'h0B;	
           reg_53 <= 8'h7F;	
@@ -635,67 +505,64 @@ module reg_file (
           reg_70 <= 8'h05; 
           reg_71 <= 8'hF0;
           reg_72 <= 8'h55;
-	  reg_73 <= 8'h40;	
+		  reg_73 <= 8'h40;	
           reg_74 <= 8'hE1;
           reg_75 <= 8'h33;	
           reg_76 <= 8'h63;
           reg_77 <= 8'h00;
-	  reg_78 <= 8'hC7;
-	  reg_79 <= 8'h00;
-	  reg_80 <= 8'h2B;
-	  reg_81 <= 8'h01;
-	  reg_82 <= 8'h8F;	
-	  reg_83 <= 8'h01;
-	  reg_84 <= 8'hF3;
-	  reg_85 <= 8'h01;	
-	  reg_86 <= 8'h57;	
+		  reg_78 <= 8'hC7;
+		  reg_79 <= 8'h00;
+		  reg_80 <= 8'h2B;
+		  reg_81 <= 8'h01;
+		  reg_82 <= 8'h8F;	
+		  reg_83 <= 8'h01;
+		  reg_84 <= 8'hF3;
+		  reg_85 <= 8'h01;	
+		  reg_86 <= 8'h57;	
           reg_87 <= 8'h02;	
           reg_88 <= 8'h0D;	
           reg_89 <= 8'h02;
-	  reg_90 <= 8'h33;	
+		  reg_90 <= 8'h33;	
           reg_91 <= 8'hA0;
           reg_92 <= 8'h0F;
           reg_93 <= 8'hD0;
-	  reg_94 <= 8'h07;
+		  reg_94 <= 8'h07;
           reg_95 <= 8'h19;
           reg_96 <= 8'h49;
           reg_97 <= 8'h03;
           reg_98 <= 8'h11;
-	  reg_99 <= 8'h33;
+		  reg_99 <= 8'h33;
           reg_100 <= 8'h28;
           reg_101 <= 8'h04;
-	  reg_102 <= 8'h17;	
-	  reg_103 <= 8'h00;	
-	  reg_104 <= 8'h10;
-	  reg_105 <= 8'h11;
-	  reg_106 <= 8'h13;
-	  reg_107 <= 8'h1B;
-	  reg_108 <= 8'h1B;
-   	  reg_109 <= 8'h3F;
-   	  reg_110 <= 8'h7F;
-   	  reg_111 <= 8'h44;
-   	  reg_112 <= 8'h44;
+		  reg_102 <= 8'h17;	
+		  reg_103 <= 8'h00;	
+		  reg_104 <= 8'h10;
+		  reg_105 <= 8'h11;
+		  reg_106 <= 8'h13;
+		  reg_107 <= 8'h1B;
+		  reg_108 <= 8'h1B;
+		  reg_109 <= 8'h3F;
+		  reg_110 <= 8'h7F;
+		  reg_111 <= 8'h44;
+		  reg_112 <= 8'h44;
           reg_113 <= 8'h44;
-	  reg_114 <= 8'h30;
+		  reg_114 <= 8'h30;
           reg_115 <= 8'h30;
-	  reg_116 <= 8'h33;
+		  reg_116 <= 8'h33;
           reg_117 <= 8'h22;
-	  reg_118 <= 8'h27;
-	  reg_119 <= 8'h34;
-	  reg_120 <= 8'h0D;
-	  reg_121 <= 8'hFF;
-	  reg_122 <= 8'hFF;
-	  reg_123 <= 8'hFF;
-	  reg_124 <= 8'h03;
-	  reg_125 <= 8'h77;
-	  reg_126 <= 8'h00;
+		  reg_118 <= 8'h27;
+		  reg_119 <= 8'h34;
+		  reg_120 <= 8'h0D;
+		  reg_121 <= 8'hFF;
+		  reg_122 <= 8'hFF;
+		  reg_123 <= 8'hFF;
+		  reg_124 <= 8'h03;
+		  reg_125 <= 8'h77;
+		  reg_126 <= 8'h00;
 	    end
       else
         if (xbus_wr == 1'b1)
           case (xbus_addr)
-	    //1: reg_01 <= xbus_din;
-	    //2: reg_02 <= xbus_din;
-	    //3: reg_03 <= xbus_din;
             4: reg_04 <= xbus_din[3:0];
             5: reg_05 <= xbus_din;
             6: reg_06 <= xbus_din;
@@ -703,7 +570,7 @@ module reg_file (
             8: reg_08 <= xbus_din;
             9: reg_09 <= xbus_din;
             10: reg_10 <= xbus_din;
-	    11: reg_11 <= xbus_din;
+			11: reg_11 <= xbus_din;
             12: reg_12 <= xbus_din;
             13: reg_13 <= xbus_din;
             14: reg_14 <= xbus_din;
@@ -717,8 +584,8 @@ module reg_file (
             22: reg_22 <= xbus_din;
             23: reg_23 <= xbus_din;
             24: reg_24 <= xbus_din;
-	    25: reg_25 <= xbus_din;
-	    26: reg_26 <= xbus_din;
+			25: reg_25 <= xbus_din;
+			26: reg_26 <= xbus_din;
             27: reg_27 <= xbus_din;
             28: reg_28 <= xbus_din;
             29: reg_29 <= xbus_din;
@@ -748,7 +615,7 @@ module reg_file (
             53: reg_53 <= xbus_din;
             54: reg_54 <= xbus_din;
             55: reg_55 <= xbus_din;
-	    56: reg_56 <= xbus_din;
+			56: reg_56 <= xbus_din;
             57: reg_57 <= xbus_din;
             58: reg_58 <= xbus_din;
             59: reg_59 <= xbus_din;
@@ -764,9 +631,9 @@ module reg_file (
             69: reg_69 <= xbus_din;
             70: reg_70 <= xbus_din;
             71: reg_71 <= xbus_din;
-	    72: reg_72 <= xbus_din;
- 	    73: reg_73 <= xbus_din;
-	    74: reg_74 <= xbus_din;
+			72: reg_72 <= xbus_din;
+			73: reg_73 <= xbus_din;
+			74: reg_74 <= xbus_din;
             75: reg_75 <= xbus_din;
             76: reg_76 <= xbus_din;
             77: reg_77 <= xbus_din;
@@ -794,31 +661,31 @@ module reg_file (
             99: reg_99 <= xbus_din;
             100: reg_100 <= xbus_din;
             101: reg_101 <= xbus_din;
-	    102: reg_102 <= xbus_din;
- 	    103: reg_103 <= xbus_din;
-	    104: reg_104 <= xbus_din;
- 	    105: reg_105 <= xbus_din;
-	    106: reg_106 <= xbus_din;
- 	    107: reg_107 <= xbus_din;
-	    108: reg_108 <= xbus_din;
-	    109: reg_109 <= xbus_din;
-	    110: reg_110 <= xbus_din;
- 	    111: reg_111 <= xbus_din;
- 	    112: reg_112 <= xbus_din;
-	    113: reg_113 <= xbus_din;
-	    114: reg_114 <= xbus_din;
-	    115: reg_115 <= xbus_din;
-	    116: reg_116 <= xbus_din;
-	    117: reg_117 <= xbus_din;
-	    118: reg_118 <= xbus_din;
-	    119: reg_119 <= xbus_din;
-	    120: reg_120 <= xbus_din;
-	    121: reg_121 <= xbus_din;
-	    122: reg_122 <= xbus_din;
-	    123: reg_123 <= xbus_din;
-	    124: reg_124 <= xbus_din;
-	    125: reg_125 <= xbus_din;
-	    126: reg_126 <= xbus_din;
+			102: reg_102 <= xbus_din;
+			103: reg_103 <= xbus_din;
+			104: reg_104 <= xbus_din;
+			105: reg_105 <= xbus_din;
+			106: reg_106 <= xbus_din;
+			107: reg_107 <= xbus_din;
+			108: reg_108 <= xbus_din;
+			109: reg_109 <= xbus_din;
+			110: reg_110 <= xbus_din;
+			111: reg_111 <= xbus_din;
+			112: reg_112 <= xbus_din;
+			113: reg_113 <= xbus_din;
+			114: reg_114 <= xbus_din;
+			115: reg_115 <= xbus_din;
+			116: reg_116 <= xbus_din;
+			117: reg_117 <= xbus_din;
+			118: reg_118 <= xbus_din;
+			119: reg_119 <= xbus_din;
+			120: reg_120 <= xbus_din;
+			121: reg_121 <= xbus_din;
+			122: reg_122 <= xbus_din;
+			123: reg_123 <= xbus_din;
+			124: reg_124 <= xbus_din;
+			125: reg_125 <= xbus_din;
+			126: reg_126 <= xbus_din;
           endcase
     end
 
@@ -829,7 +696,7 @@ module reg_file (
       1: xbus_dout = reg_01;
       2: xbus_dout = reg_02;
       3: xbus_dout = reg_03;
-      4: xbus_dout = {rst_n, adc_pulse, start_pulse, lock, reg_04};
+      4: xbus_dout = {rst_n, 3'b000, reg_04};
       5: xbus_dout = reg_05;
       6: xbus_dout = reg_06;
       7: xbus_dout = reg_07;
@@ -955,68 +822,61 @@ module reg_file (
       default: xbus_dout = 8'h00;
     endcase
     
+	// shadow_reg_clock used for shadow FFs, 
+	// signals in this block will be changed after finishing i2c transaction
     always @ (posedge shadow_reg_clk or negedge rst_n)
-    if (rst_n == 1'b0)
+	begin
+      if (rst_n == 1'b0)
 	    begin
-	    	clk_en_temp <= 1'b1;
-		soft_rst <= 1'b0;
-		i2c_if_temp <= 1'b0;
-		spi_if_temp <= 1'b0;
+	      clk_en_temp <= 1'b1;
+		  soft_rst <= 1'b0;
 	    end
-    else
+      else
 	    begin
-	    	if ((reg_04[1:0] == 2'b00) || (reg_04[1:0] == 2'b11)) 
-		    	clk_en_temp <= 1'b1;
-	    	else
-		 	clk_en_temp <= 1'b0;
-			soft_rst <= reg_07[0] & reg_07[1];
-			i2c_if_temp <= reg_06[5];
-			spi_if_temp <= reg_06[4];
+	      if ((reg_04[1:0] == 2'b00) || (reg_04[1:0] == 2'b11)) clk_en_temp <= 1'b1;
+	      else clk_en_temp <= 1'b0;
+		  soft_rst <= reg_07[0] & reg_07[1];
 	    end
-	    
-    assign test_mode_en = (reg_10 == 8'hFF)? 1'b1 : 1'b0;
-	    
+	end   
+	
+	// synchronized clock_en signal with sys_clk
 	always @ (posedge sys_clk or negedge rst_n)
-		if (rst_n == 1'b0)
-			begin
-				clk_en_temp_sync1 <= 1'b1;
-				clk_en_temp_sync2 <= 1'b1;
-				clk_en_temp_sync3 <= 1'b1;
-			end
-		else
-			begin
-				clk_en_temp_sync1 <= clk_en_temp;
-				clk_en_temp_sync2 <= clk_en_temp_sync1;
-				clk_en_temp_sync3 <= clk_en_temp_sync2;
-			end
-			
+	begin
+	  if (rst_n == 1'b0)
+		begin
+		  clk_en_temp_sync1 <= 1'b1;
+		  clk_en_temp_sync2 <= 1'b1;
+		  clk_en_temp_sync3 <= 1'b1;
+		end
+	  else
+		begin
+		  clk_en_temp_sync1 <= clk_en_temp;
+		  clk_en_temp_sync2 <= clk_en_temp_sync1;
+		  clk_en_temp_sync3 <= clk_en_temp_sync2;
+		end
+	end		
 	
 	always @ (posedge sys_clk or negedge rst_n)
-		if (rst_n == 1'b0)
-			begin
-				power_en <= 1'b1;
-				power_en_counter_r <= 7'h7F;
-				power_gate_r <= 1'b1;
-			end
-		else
-			begin
-				power_en <= clk_en_temp_sync2;
-				if (clk_en_temp_sync2 == 1'b0)
-					power_en_counter_r <= 7'h00;
-				else if (power_en_counter_r != 7'b1100000)
-					power_en_counter_r <= power_en_counter_r + 1;
-				if (clk_en_temp_sync2 == 1'b0)
-					power_gate_r <= 1'b0;
-				else if (power_en_counter_r[6:5] == 2'b11)
-					power_gate_r <= 1'b1;
-			end
-
+	begin
+	  if (rst_n == 1'b0)
+		begin
+		  power_en <= 1'b1;
+		  power_en_counter_r <= 7'h7F;
+		  power_gate_r <= 1'b1;
+		end
+	  else
+		begin
+		  power_en <= clk_en_temp_sync2;
+		  if (clk_en_temp_sync2 == 1'b0) power_en_counter_r <= 7'h00;
+		  else if (power_en_counter_r != 7'b1100000) power_en_counter_r <= power_en_counter_r + 1;
+		  if (clk_en_temp_sync2 == 1'b0) power_gate_r <= 1'b0;
+		  else if (power_en_counter_r[6:5] == 2'b11) power_gate_r <= 1'b1;
+		end
+	end
+	
 	assign clk_en = clk_en_temp_sync3 | clk_en_temp;	
 	assign i2c_wd_en_n = reg_06[7];
 	assign i2c_wd_sel = reg_06[6];
-	assign i2c_if = i2c_if_temp;
-	assign spi_if = spi_if_temp;
-	assign spi3_en = reg_06[3];
 	assign i2c_del = reg_07[7:4];
 	assign i2c_addr = reg_08[6:0];
 	assign reg04_exam = (power_gate_r == 1'b1)? reg_04[3:2] : 2'b00;
