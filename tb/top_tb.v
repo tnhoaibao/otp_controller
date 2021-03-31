@@ -119,12 +119,16 @@ initial begin
   i_run_test_mode = 1'b1;
 end
 
-// i_run_test_mode
-initial begin
-  i_otp_prog = 1'b0;
-  #40000;
-  i_otp_prog = 1'b1;
-end
+// i_otp_prog
+always @(posedge sys_clk)
+  begin
+    if (rst_n == 1'b0)
+	  i_otp_prog <= 1'b1;
+    else if ((xbus_addr == 7'd99) && (xbus_din == 8'hFF)) 
+      i_otp_prog <= 1'b0;
+    else
+      i_otp_prog <= i_otp_prog;
+  end
 
 // PGM (no reading) operation
 initial begin
@@ -153,6 +157,13 @@ always begin
   i_otp_q = $random;
   #12;
   i_otp_q = $random;
+  #12;
+end
+
+always begin
+  xbus_dout = 8'hAA;
+  #12;
+  xbus_dout = 8'hAA;
   #12;
 end
 endmodule

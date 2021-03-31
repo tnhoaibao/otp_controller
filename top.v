@@ -103,8 +103,20 @@ wire [7:0] otp_xbus_dout;
 wire otp_xbus_wr;
 wire rcm_sys_clk;
 
+//wire otp_prog_w;	//connect program enable signal from otp_rcm to otp_main
+//wire otp_read_n_w;	//connect read enable signal from otp_rcm to otp_main
+
 wire otp_done = ~otp_busy_w;
-wire i2c_busy_w = 1'b0;
+
+// generate i2c_busy, it just for testing without i2c
+reg i2c_busy_w;
+initial begin
+  i2c_busy_w = 1'b0;
+  #10000;
+  i2c_busy_w = 1'b1;
+  #40000;
+  i2c_busy_w = 1'b0;
+end
 
 // Instantiate i2c top module
 i2c_top i2c_top_i (

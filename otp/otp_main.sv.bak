@@ -23,27 +23,23 @@ module otp_main (
 	o_otp_busy 		//input signal indicates that there is otp transaction or not, 1-i2c transaction, 0-no i2c transaction
 	);
 
-parameter num_of_reg = 10; //number of registers will be loaded into otp memory
-parameter [6:0] ADDR_ARRAY [0 : num_of_reg-1] = {7'd1,  7'd2,  7'd3,  7'd4,  7'd5,  7'd6,  7'd7,  7'd8,  7'd9,  7'd10}; 
-//												 7'd11, 7'd12, 7'd13, 7'd14, 7'd15, 7'd16, 7'd17, 7'd18, 7'd19, 7'd20,
-//												 7'd21, 7'd22, 7'd23, 7'd24, 7'd25, 7'd26, 7'd27, 7'd28, 7'd29, 7'd30,
-//												 7'd31, 7'd32, 7'd33, 7'd34, 7'd35, 7'd36, 7'd37, 7'd38, 7'd39, 7'd40,
-//												 7'd41, 7'd42, 7'd43, 7'd44, 7'd45, 7'd46, 7'd47, 7'd48, 7'd49, 7'd50,
-//												 7'd51, 7'd52, 7'd53, 7'd54, 7'd55, 7'd56, 7'd57, 7'd58, 7'd59, 7'd60,
-//												 7'd61, 7'd62, 7'd63, 7'd64, 7'd65, 7'd66, 7'd67, 7'd68, 7'd69, 7'd70,
-//												 7'd71, 7'd72, 7'd73, 7'd74, 7'd75, 7'd76, 7'd77, 7'd78, 7'd79, 7'd80,
-//												 7'd81, 7'd82, 7'd83, 7'd84, 7'd85, 7'd86, 7'd87, 7'd88, 7'd89, 7'd90,
-//												 7'd91, 7'd92, 7'd93, 7'd94, 7'd95, 7'd96, 7'd97, 7'd98, 7'd99, 7'd100}; // example, define registers access to otp mem
+parameter num_of_reg = 5; //number of registers will be loaded into otp memory
+parameter [6:0] ADDR_ARRAY [0 : num_of_reg-1] = {7'd1,  7'd2,  7'd3,  7'd4,  7'd5,  7'd6,  7'd7,  7'd8,  7'd9,  7'd10, 
+												 7'd11, 7'd12, 7'd13, 7'd14, 7'd15, 7'd16, 7'd17, 7'd18, 7'd19, 7'd20,
+												 7'd21, 7'd22, 7'd23, 7'd24, 7'd25, 7'd26, 7'd27, 7'd28, 7'd29, 7'd30,
+												 7'd31, 7'd32, 7'd33, 7'd34, 7'd35, 7'd36, 7'd37, 7'd38, 7'd39, 7'd40,
+												 7'd41, 7'd42, 7'd43, 7'd44, 7'd45, 7'd46, 7'd47, 7'd48, 7'd49, 7'd50,
+												 7'd51, 7'd52, 7'd53, 7'd54, 7'd55, 7'd56, 7'd57, 7'd58, 7'd59, 7'd60,
+												 7'd61, 7'd62, 7'd63, 7'd64, 7'd65, 7'd66, 7'd67, 7'd68, 7'd69, 7'd70,
+												 7'd71, 7'd72, 7'd73, 7'd74, 7'd75, 7'd76, 7'd77, 7'd78, 7'd79, 7'd80,
+												 7'd81, 7'd82, 7'd83, 7'd84, 7'd85, 7'd86, 7'd87, 7'd88, 7'd89, 7'd90,
+												 7'd91, 7'd92, 7'd93, 7'd94, 7'd95, 7'd96, 7'd97, 7'd98, 7'd99, 7'd100}; // example, define registers access to otp mem
 // maximum count for start_pgm is 3 (SUP_PG timing)
 parameter TSUP_PG = 3;
 // maximum count for main_pgm is 1000 (PGM timing)
 parameter TPGM = 100; //define smaller number to verify
 // maximum count for finish_pgm is 3 (HP_PG timing)
 parameter ADDR_DUMMY = 7'h7F;
-// define register contains program and read enable
-// it will be reset to default value after finish program or read operation
-parameter RW_ADDR = 7'd99;
-parameter RW_DATA = 8'hFF; 
 
 input sys_clk;
 input rst_n;
@@ -94,7 +90,7 @@ reg [7:0] xbus_din_r;
 reg xbus_wr_r;
 
 // define states in fsm
-typedef enum {IDLE, WAIT_I2C, START_READ, MAIN_READ, FINISH_READ, START_PGM, MAIN_PGM, FINISH_PGM, OTP_DONE} efuse_fsm_t;
+typedef enum {IDLE, WAIT_I2C, START_READ, MAIN_READ, FINISH_READ, START_PGM, MAIN_PGM, FINISH_PGM} efuse_fsm_t;
 efuse_fsm_t efuse_fsm_r, efuse_fsm_next_s;
 
 // synchronize i_i2c_busy to sys_clk
@@ -117,7 +113,7 @@ always @(posedge sys_clk or negedge rst_n)
 always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0)
-      efuse_fsm_r <= IDLE;
+      efuse_fsm_r <= START_READ;
     else
       efuse_fsm_r <= efuse_fsm_next_s;
   end
@@ -146,25 +142,21 @@ always @(*)
 					else
 						efuse_fsm_next_s = MAIN_READ;
 		FINISH_READ: if (fsm_cnt_r == 1) 
-						efuse_fsm_next_s = OTP_DONE;
+						efuse_fsm_next_s = IDLE;
 					else
 						efuse_fsm_next_s = FINISH_READ;
 		START_PGM: if (fsm_cnt_r == 3) 
 						efuse_fsm_next_s = MAIN_PGM;
 					else
 						efuse_fsm_next_s = START_PGM;
-		MAIN_PGM: if ((num_reg_r == (num_of_reg - 1)) && (fsm_cnt_r == TPGM) && (efuse_no_bitline_r == 7)) 
+		MAIN_PGM: if ((num_reg_r == (num_of_reg - 1)) && (fsm_cnt_r == TPGM)) 
 						efuse_fsm_next_s = FINISH_PGM;
 					else 
 						efuse_fsm_next_s = MAIN_PGM;
 		FINISH_PGM: if (fsm_cnt_r == 3) 
-						efuse_fsm_next_s = OTP_DONE;
-					else
-						efuse_fsm_next_s = FINISH_PGM;
-		OTP_DONE: if (fsm_cnt_r == 100)
 						efuse_fsm_next_s = IDLE;
 					else
-						efuse_fsm_next_s = OTP_DONE;
+						efuse_fsm_next_s = FINISH_PGM;
 		default: efuse_fsm_next_s = IDLE;
       endcase
     end
@@ -200,9 +192,6 @@ always @(posedge sys_clk or negedge rst_n)
 	  else fsm_cnt_r <= fsm_cnt_next_w;
 	end else if (efuse_fsm_r == FINISH_PGM) begin
 	  if (fsm_cnt_next_w == 4) fsm_cnt_r <= 0;
-	  else fsm_cnt_r <= fsm_cnt_next_w;
-	end else if (efuse_fsm_r == OTP_DONE) begin
-	  if (fsm_cnt_next_w == 101) fsm_cnt_r <= 0;
 	  else fsm_cnt_r <= fsm_cnt_next_w;
 	end else fsm_cnt_r <= 0;
   end
@@ -273,9 +262,6 @@ always @(posedge sys_clk or negedge rst_n)
     end else if (efuse_fsm_r == FINISH_READ) begin
       xbus_addr_r <= xbus_addr_r;
 	  num_reg_r <= num_reg_r;	
-	end else if (efuse_fsm_r == OTP_DONE) begin
-	  xbus_addr_r <= RW_ADDR;
-	  num_reg_r <= 0;
 	end else begin
 	  xbus_addr_r <= ADDR_ARRAY[0];
 	  num_reg_r <= 0;
@@ -396,7 +382,6 @@ always @(posedge sys_clk or negedge rst_n)
 	  if (fsm_cnt_r == 3) xbus_din_r <= i_otp_q;
 	  else xbus_din_r <= xbus_din_r;
 	end else if (efuse_fsm_r == FINISH_READ) xbus_din_r <= xbus_din_r;
-	else if (efuse_fsm_r == OTP_DONE) xbus_din_r <= RW_DATA;
 	else xbus_din_r <= 8'h00;
   end
 
@@ -407,7 +392,7 @@ always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0) begin
 	  xbus_wr_r <= 1'b0;
-	end else if ((efuse_fsm_r == MAIN_READ) || (efuse_fsm_r == OTP_DONE)) xbus_wr_r <= 1'b1;
+	end else if (efuse_fsm_r == MAIN_READ) xbus_wr_r <= 1'b1;
 	else xbus_wr_r <= 1'b0;
   end
   
