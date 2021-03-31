@@ -1,5 +1,5 @@
 `timescale 1ns/10ps
-module reg_file (
+module regfile (
   rst_n, 			// reset signal
   sys_clk, 			// system clock signal
   reg_file_clk, 	// register clock synchronized with interface clock
