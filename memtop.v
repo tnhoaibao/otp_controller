@@ -11,7 +11,8 @@ module memtop (
 	i_run_test_mode,//input signal indicates that usb chip is in test mode or not, 1-test mode, 0-normal mode
 	i_otp_read_n,	//enable read mode of efuse controller, active low
 	i_otp_prog,		//enable program mode of efuse controller
-	reg_file_clk,	// clock for reg file, either i2c clock scl or system clock
+	reg_file_clk,	//clock for reg file, either i2c clock scl or system clock
+	i2c_busy,		//indicates that there is i2c transaction or not, 1- i2c transaction, 0-no i2c transaction 
 	//sent/received to/from otp memory
 	o_otp_vddqsw,	//enable high voltage LDO for efuse programming, disable for read
 	o_otp_csb,		//otp select enable, active low for programming/reading
@@ -93,6 +94,7 @@ output i2c_sda_o;
 input [6:0] m_i2c_addr;
 input i2c_addr_inv;
 output hif_idle;
+output i2c_busy;
 
 wire otp_busy_w;
 wire [6:0] i2c_xbus_addr;
@@ -111,7 +113,7 @@ wire rcm_sys_clk;
 wire otp_done = ~otp_busy_w;
 
 // generate i2c_busy, it just for testing without i2c
-wire i2c_busy_w = ~hif_idle;
+wire i2c_busy = ~hif_idle;
 
 // Instantiate i2c top module
 i2c_top i2c_top_i (
@@ -147,7 +149,7 @@ i2c_top i2c_top_i (
 
 // Instantiate apb mux module
 apb_mux apb_mux_i (
-.i2c_busy			(i2c_busy_w			),
+.i2c_busy			(i2c_busy			),
 .otp_busy			(otp_busy_w			),
 .i2c_xbus_addr		(i2c_xbus_addr		),
 .i2c_xbus_wr		(i2c_xbus_wr		),
@@ -169,7 +171,7 @@ apb_mux apb_mux_i (
 otp_main otp_main_i (
 .sys_clk			(rcm_sys_clk		),
 .rst_n				(rst_n				),
-.i_i2c_busy			(i2c_busy_w			),
+.i_i2c_busy			(i2c_busy			),
 .i_run_test_mode	(i_run_test_mode	),
 .o_otp_vddqsw		(o_otp_vddqsw		),
 .o_otp_csb			(o_otp_csb			),
@@ -189,7 +191,7 @@ otp_main otp_main_i (
 
 // Instantiate otp_rcm module
 otp_rcm otp_rcm_i (
-.i2c_busy			(i2c_busy_w			),
+.i2c_busy			(i2c_busy			),
 .passcode_en		(i_run_test_mode	),
 .otp_busy			(otp_busy_w			),
 .scan_en			(scan_en			),

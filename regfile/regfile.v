@@ -17,8 +17,10 @@ module regfile (
   soft_rst,
   i2c_addr,
   // register connect to analog/digital circuits
-  reg05_wr,			// config read/write enable for otp controller
-  reg04_exam,		// no connect to any circuits
+  passcode,			// PHSGNX passcode, used as a password to access test mode
+  i_otp_read_n,		// config read enable for otp controller, active low
+  i_otp_prog,		// config write enable for otp controller, active high
+  i_run_test_mode,	// read only bit, check if users access test mode or not
   reg09_wr,			///
   reg11_wr,			///
   reg12_wr, //ADD		////
@@ -156,8 +158,10 @@ module regfile (
 	output [3:0] i2c_del;		///
 	output soft_rst;		///
 	output [6:0] i2c_addr;		///
-	output [7:0] reg05_wr;		///
-	output [1:0] reg04_exam;	///
+	output [7:0] passcode;		///
+	output i_otp_prog;
+	output i_otp_read_n;
+	input i_run_test_mode;
 //////////////////OSC//////////////////////
 	output [7:0] reg09_wr;		///
 	output [3:0] reg11_wr;		///
@@ -301,7 +305,7 @@ module regfile (
 	wire [7:0] reg_01;
 	wire [7:0] reg_02;
 	wire [7:0] reg_03;
-	reg [3:0] reg_04;
+	reg [6:0] reg_04;
 	reg [7:0] reg_05;
 	reg [7:0] reg_06;
 	reg [7:0] reg_07;
@@ -436,7 +440,7 @@ module regfile (
     begin
       if (rst_n == 1'b0)
         begin
-          reg_04 <= 4'h0;//PREVIOUS:4'h80
+          reg_04 <= 7'h10;//PREVIOUS:4'h80
           reg_05 <= 8'h00;
           reg_06 <= 8'h00;
           reg_07 <= 8'h00;
@@ -563,7 +567,7 @@ module regfile (
       else
         if (xbus_wr == 1'b1)
           case (xbus_addr)
-            4: reg_04 <= xbus_din[3:0];
+            4: reg_04 <= xbus_din[6:0];
             5: reg_05 <= xbus_din;
             6: reg_06 <= xbus_din;
             7: reg_07 <= xbus_din;
@@ -696,7 +700,7 @@ module regfile (
       1: xbus_dout = reg_01;
       2: xbus_dout = reg_02;
       3: xbus_dout = reg_03;
-      4: xbus_dout = {rst_n, 3'b000, reg_04};
+      4: xbus_dout = {i_run_test_mode, reg_04};
       5: xbus_dout = reg_05;
       6: xbus_dout = reg_06;
       7: xbus_dout = reg_07;
@@ -879,8 +883,9 @@ module regfile (
 	assign i2c_wd_sel = reg_06[6];
 	assign i2c_del = reg_07[7:4];
 	assign i2c_addr = reg_08[6:0];
-	assign reg04_exam = (power_gate_r == 1'b1)? reg_04[3:2] : 2'b00;
-	assign reg05_wr = (power_gate_r == 1'b1)? reg_05[7:0] : 8'h00;
+	assign passcode = (power_gate_r == 1'b1)? reg_05[7:0] : 8'h00;
+	assign i_otp_prog = (power_gate_r == 1'b1) ? reg_04 [5] : 1'b0;
+	assign i_otp_read_n = (power_gate_r == 1'b1) ? reg_04[4] : 1'b0;
 
 ///////////////////////////////////OSC//////////////////////////////////////////////////////////
 	assign reg09_wr = (power_gate_r == 1'b1)? reg_09[7:0] : 8'h00;			////////
