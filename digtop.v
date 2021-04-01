@@ -1,7 +1,7 @@
 `timescale 1ns/10ps
 module digtop (
-rst_n,				// input PoR reset
-sys_clk,			// input 200MHz LO clock
+por_rst_n,			// input PoR reset
+xtal_clk,			// input 200MHz LO clock
 soft_rst,			// output soft reset, go to PoR generator block
 hif_scl,			// input SCL, connect to SCL signal directly
 hif_scl_del,		// input SCL, connect to SCL delay signal after I2C delay block
@@ -20,6 +20,16 @@ i2c_dout_before_del,// output SDA output, check if we can remove this signal
 clk_en,				// output enable 200MHz LO clock
 i2c_del,			// output, trimming delay timing of i2c delay	
 reg05_wr,			// output, contains read/program enable for otp controller
+// output, to otp memory
+o_otp_vddqsw,		// output VDDQ enable for 2.5LDO, connect to otp memory
+o_otp_csb,			// output CSB, enable a read or program transaction, connect to otp memory
+o_otp_strobe,		// output STROBE, used as clock for otp memory
+o_otp_load,			// output LOAD, enable read transaction, connect to otp memory, active high
+i_otp_q,			// input parallel 8-bits data, connect to otp memory, get data at falling edge of STROBE
+o_otp_addr,			// output ADDRESS, 10 bits (7 for address, 3 for order of bit), connect to otp memory
+o_otp_pgenb,		// output PGENB, enable program transaction, connect to otp memory, active low
+scan_en,			// input scan enable, check if we will get this signal from reg file
+scan_clk,			// input scan clock
 // output, trimming analog/digital circuits
 // connect to corresponding circuits directly
 reg04_exam,		
@@ -144,26 +154,36 @@ reg124_wr,
 reg125_wr	
 );
 
-input rst_n,				// input PoR reset
-input sys_clk,			// input 200MHz LO clock
-output soft_rst,			// output soft reset, go to PoR generator block
-input hif_scl,			// input SCL, connect to SCL signal directly
-input hif_scl_del,		// input SCL, connect to SCL delay signal after I2C delay block
-input hif_sda_del,		// input SDA, connect to SDA delay signal after i2c delay block
-input slow_clk_in,		// input slow clock from ring oscillator
-output slow_clk_en,		// output enable signal for the slow ring oscillator 
-input sdx_input,			// input SDA, connect to SDA signal from SDA pad
-output sdx_output,			// output SDA, connect to SDA (output pin) pad
-output sdx_output_en_n,	// output enable signal for SDA pad
-output hif_idle_out,		// output HIF IDLE, send out hif_idle signal before feedback to use as clock
-input hif_idle_feedback,	// input HIF_IDLE, hif_dile feedback signal
-input i2c_din_after_del,	// input SDA, after i2c delay block
-output i2c_din_before_del, // output SDA, check if we can remove this signal
-input i2c_dout_after_del, // input SDA output, after i2c delay
-output i2c_dout_before_del,// output SDA output, check if we can remove this signal
-output clk_en,				// output enable 200MHz LO clock
-output [3:0] i2c_del,			// output, trimming delay timing of i2c delay	
-output [7:0] reg05_wr,			// output, contains read/program enable for otp controller
+input por_rst_n;				// input PoR reset
+input xtal_clk;			// input 200MHz LO clock
+output soft_rst;			// output soft reset, go to PoR generator block
+input hif_scl;			// input SCL, connect to SCL signal directly
+input hif_scl_del;		// input SCL, connect to SCL delay signal after I2C delay block
+input hif_sda_del;		// input SDA, connect to SDA delay signal after i2c delay block
+input slow_clk_in;		// input slow clock from ring oscillator
+output slow_clk_en;		// output enable signal for the slow ring oscillator 
+input sdx_input;			// input SDA, connect to SDA signal from SDA pad
+output sdx_output;			// output SDA, connect to SDA (output pin) pad
+output sdx_output_en_n;	// output enable signal for SDA pad
+output hif_idle_out;		// output HIF IDLE, send out hif_idle signal before feedback to use as clock
+input hif_idle_feedback;	// input HIF_IDLE, hif_dile feedback signal
+input i2c_din_after_del;	// input SDA, after i2c delay block
+output i2c_din_before_del; // output SDA, check if we can remove this signal
+input i2c_dout_after_del; // input SDA output, after i2c delay
+output i2c_dout_before_del;// output SDA output, check if we can remove this signal
+output clk_en;				// output enable 200MHz LO clock
+output [3:0] i2c_del;			// output, trimming delay timing of i2c delay	
+output [7:0] reg05_wr;			// output, contains read/program enable for otp controller
+// output, to otp memory
+output o_otp_vddqsw;		// output VDDQ enable for 2.5LDO, connect to otp memory
+output o_otp_csb;			// output CSB, enable a read or program transaction, connect to otp memory
+output o_otp_strobe;		// output STROBE, used as clock for otp memory
+output o_otp_load;			// output LOAD, enable read transaction, connect to otp memory, active high
+input [7:0] i_otp_q;			// input parallel 8-bits data, connect to otp memory, get data at falling edge of STROBE
+output [9:0] o_otp_addr;			// output ADDRESS, 10 bits (7 for address, 3 for order of bit), connect to otp memory
+output o_otp_pgenb;		// output PGENB, enable program transaction, connect to otp memory, active low
+input scan_en;			// input scan enable, check if we will get this signal from reg file
+input scan_clk;			// input scan clock
 // output, trimming analog/digital circuits
 // connect to corresponding circuits directly
 input reg04_exam;		
@@ -286,6 +306,39 @@ input BF_RD1;
 input reg120_wr;		    					
 input reg124_wr;		
 input reg125_wr;	
+
+// define internal signal
+// by rcm_simplified
+wire sys_clk;
+wire rst_n;
+// connect rcm_simplified and memtop
+wire i2c_active;
+wire i2c_start;
+wire i2c_stop;
+wire i2c_wd_rst;
+wire i2c_wd_en_n;
+wire i2c_rst_n;
+wire i2c_active_rst_n;
+wire i2c_scl_rst_n;
+wire i2c_stop_rst_n;
+wire i2c_scl_clk;
+wire i2c_scl_n_clk;
+wire i2c_sda_clk;
+wire i2c_sda_clk_n;
+wire reg_file_clk_2_rcm;
+// connect rcm_simplified and regfile
+wire shadow_reg_clk;
+// connect memtop and reg file
+wire [6:0] xbus_addr;
+wire [7:0] xbus_din;
+wire [7:0] xbus_dout;
+wire xbus_wr;
+wire i_run_test_mode;
+wire i_otp_read_n;
+wire i_otp_prog;
+wire reg_file_clk;
+wire [6:0] i2c_addr;
+wire i2c_wd_sel;
 
 regfile regfile_i (
 .rst_n 					(rst_n				),		
@@ -427,33 +480,33 @@ regfile regfile_i (
 );
 
 rcm_simplified rcm_simplified_i (
-.xtal_clk					(xtal_clk				), // input crystal clock
-.por_rst_n					(por_rst_n				), // input POR reset
-.hif_active					(i2c_active				), // Interface ACTIVE bit
-.hif_start					(i2c_start				), // Interface START bit
-.hif_stop					(i2c_stop				), // Interface STOP bit
-.hif_scl					(hif_scl				), // Interface SCL signal
-.hif_watchdog				(i2c_wd_rst				), // Watchdog interrupt
-.hif_scl_del				(hif_scl_del			), // delay of SCL signal
-.hif_sda_del				(hif_sda_del			), // delay of SDA signal
-.slow_clk_in				(slow_clk_in			), // Slow clock from ring osc
-.hif_select					(1'b0					), // Interface select signal
-.hif_idle					(hif_idle_feedback		), // Signal indicating host interface idle
-.i2c_wd_en_n				(i2c_wd_en_n			), // Enable I2C watchdog from register file
-.i2c_rst_n					(i2c_rst_n				), // Reset I2C interface without I2C register address reg
-.i2c_active_rst_n			(i2c_active_rst_n		), // Reset I2C register address reg
-.i2c_scl_rst_n				(i2c_scl_rst_n			), // Reset START bit from scl signal
-.i2c_stop_rst_n				(i2c_stop_rst_n			), // Reset ACTIVE bit from STOP bit and watchdog
-.i2c_clk					(i2c_scl_clk			), // I2C clock
-.i2c_clk_n					(i2c_scl_n_clk			), // I2C inverted clock
-.reg_file_clk				(reg_file_clk_2_rcm		), // Register file clock
-.i2c_sda_clk				(i2c_sda_clk			), // I2C clock using SDA signal for START, STOP, ACTIVE bit
-.i2c_sda_clk_n				(i2c_sda_clk_n			), // I2C clock using inverted SDA signal
-.slow_clk					(slow_clk				), // Slow clock for I2C watchdog
-.sys_clk					(sys_clk				), // System clock 
-.shadow_reg_clk				(shadow_reg_clk			), // clock for shadow register 
-.slow_clk_en				(slow_clk_en			), // output enable signal for the ring oscillator 
-.rst_n						(rst_n					)  // System reset
+.xtal_clk					(xtal_clk				), 		// input crystal clock
+.por_rst_n					(por_rst_n				),	 	// input POR reset
+.hif_active					(i2c_active				), 		// Interface ACTIVE bit
+.hif_start					(i2c_start				), 		// Interface START bit
+.hif_stop					(i2c_stop				), 		// Interface STOP bit
+.hif_scl					(hif_scl				), 		// Interface SCL signal
+.hif_watchdog				(i2c_wd_rst				), 		// Watchdog interrupt
+.hif_scl_del				(hif_scl_del			), 		// delay of SCL signal
+.hif_sda_del				(hif_sda_del			), 		// delay of SDA signal
+.slow_clk_in				(slow_clk_in			), 		// Slow clock from ring osc
+.hif_select					(1'b0					), 		// Interface select signal
+.hif_idle					(hif_idle_feedback		), 		// Signal indicating host interface idle
+.i2c_wd_en_n				(i2c_wd_en_n			), 		// Enable I2C watchdog from register file
+.i2c_rst_n					(i2c_rst_n				), 		// Reset I2C interface without I2C register address reg
+.i2c_active_rst_n			(i2c_active_rst_n		), 		// Reset I2C register address reg
+.i2c_scl_rst_n				(i2c_scl_rst_n			), 		// Reset START bit from scl signal
+.i2c_stop_rst_n				(i2c_stop_rst_n			), 		// Reset ACTIVE bit from STOP bit and watchdog
+.i2c_clk					(i2c_scl_clk			), 		// I2C clock
+.i2c_clk_n					(i2c_scl_n_clk			), 		// I2C inverted clock
+.reg_file_clk				(reg_file_clk_2_rcm		), 		// Register file clock
+.i2c_sda_clk				(i2c_sda_clk			), 		// I2C clock using SDA signal for START, STOP, ACTIVE bit
+.i2c_sda_clk_n				(i2c_sda_clk_n			), 		// I2C clock using inverted SDA signal
+.slow_clk					(slow_clk				), 		// Slow clock for I2C watchdog
+.sys_clk					(sys_clk				), 		// System clock 
+.shadow_reg_clk				(shadow_reg_clk			), 		// clock for shadow register 
+.slow_clk_en				(slow_clk_en			), 		// output enable signal for the ring oscillator 
+.rst_n						(rst_n					)  		// System reset
 );
 
 memtop memtop_i (
