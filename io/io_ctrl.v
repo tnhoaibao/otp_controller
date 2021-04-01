@@ -4,7 +4,7 @@ module io_ctrl (
 	i2c_sda_o, // output data for i2c_interface (put this signal to i2c delay block)
 	sdx_input, // input value for SDX pad 
 	sdx_output, // output to sdx pad
-	sdx_output_en_n, //output enable signal for SDX pad
+	sdx_output_en_n //output enable signal for SDX pad
 	);
 	
 output i2c_sda_i;
