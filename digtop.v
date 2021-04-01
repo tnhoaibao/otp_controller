@@ -2,6 +2,7 @@
 module digtop (
 por_rst_n,			// input PoR reset
 xtal_clk,			// input 200MHz LO clock
+// from/to main blocks related to i2c
 soft_rst,			// output soft reset, go to PoR generator block
 hif_scl,			// input SCL, connect to SCL signal directly
 hif_scl_del,		// input SCL, connect to SCL delay signal after I2C delay block
@@ -13,6 +14,7 @@ sdx_output,			// output SDA, connect to SDA (output pin) pad
 sdx_output_en_n,	// output enable signal for SDA pad
 hif_idle_out,		// output HIF IDLE, send out hif_idle signal before feedback to use as clock
 hif_idle_feedback,	// input HIF_IDLE, hif_dile feedback signal
+i2c_clk_after_del,	// input SCL, after i2c delay block
 i2c_din_after_del,	// input SDA, after i2c delay block
 i2c_din_before_del, // output SDA, check if we can remove this signal
 i2c_dout_after_del, // input SDA output, after i2c delay
@@ -20,7 +22,7 @@ i2c_dout_before_del,// output SDA output, check if we can remove this signal
 clk_en,				// output enable 200MHz LO clock
 i2c_del,			// output, trimming delay timing of i2c delay	
 reg05_wr,			// output, contains read/program enable for otp controller
-// output, to otp memory
+// from/to otp memory
 o_otp_vddqsw,		// output VDDQ enable for 2.5LDO, connect to otp memory
 o_otp_csb,			// output CSB, enable a read or program transaction, connect to otp memory
 o_otp_strobe,		// output STROBE, used as clock for otp memory
@@ -167,6 +169,7 @@ output sdx_output;			// output SDA, connect to SDA (output pin) pad
 output sdx_output_en_n;	// output enable signal for SDA pad
 output hif_idle_out;		// output HIF IDLE, send out hif_idle signal before feedback to use as clock
 input hif_idle_feedback;	// input HIF_IDLE, hif_dile feedback signal
+input i2c_clk_after_del;	// input SCL, after i2c delay block
 input i2c_din_after_del;	// input SDA, after i2c delay block
 output i2c_din_before_del; // output SDA, check if we can remove this signal
 input i2c_dout_after_del; // input SDA output, after i2c delay
@@ -186,126 +189,126 @@ input scan_en;			// input scan enable, check if we will get this signal from reg
 input scan_clk;			// input scan clock
 // output, trimming analog/digital circuits
 // connect to corresponding circuits directly
-input reg04_exam;		
-input reg09_wr;		
-input reg11_wr;		
-input reg12_wr;	
-input reg13_wr;	
-input reg14_wr;	
-input reg15_wr;	
-input reg16_wr;	
-input LFPS_EN_CONTROLLER;	
-input reg18_wr;		
-input reg19_wr;		
-input reg20_wr;		
-input reg21_wr;		
-input reg22_wr;		
-input reg23_wr;		
-input reg24_wr;		
-input reg25_wr;		
-input reg26_wr;		
-input reg27_wr;		
-input reg28_wr;		
-input EN_EMP;
-input TX_EN_CONTROLLER;
-input reg30_wr;		
-input reg31_wr;		
-input reg32_wr;		
-input reg33_wr;		
-input reg34_wr;		
-input reg35_wr;		
-input reg36_wr;		
-input reg37_wr;		
-input reg38_wr;		
-input reg39_wr;		
-input reg40_wr;		
-input reg41_wr;		
-input reg42_wr;		
-input SYS_IMP_EN;	
-input reg44_wr;		
-input TIME100NS_OFF;	
-input EMP_VALUE_CTRL;	
-input LPMM_EN;
-input TIME40NS; 
-input TIME100NS_ON;   	
-input TIME300NS; 
-input TIME60NS_H;
-input TIME70NS_H;
-input TIME200NS; 
-input TIME170NS; 
-input TIME1MS; 
-input TIME16MS;
-input TIME50U; 
-input TIMEATT; 
-input TIME130MS;
-input TIME460MS;
-input ATT_PULSE_HIGH;
-input TIMEISPLUG;
-input TIME_EN_1; 
-input TIME_EN_2; 
-input TIME_EN_3; 
-input TIME_EN_4; 
-input TIME_EN_5; 
-input TIME_EN_6; 
-input TIME60NS_L;
-input TIME70NS_L;
-input CTR_LFPS_RX; 
-input CTR_SS_RX; 
-input CTR_LFPS_TX; 
-input CTR_SS_TX; 
-input ATT_PULSE_LOW;
-input TIME_HOLD_LOW;   
-input CTR_IS_PLUG; 
-input CTR_EN_LOW_IMP;
-input CTR_VALID_ATT;
-input CTR_TIMEOUT460;
-input SEL_STATE;		
-input SEL_PLUG_ATT;   	
-input AGC_125U_EN;		    
-input AGC_EN;			
-input TIA_ZPSW;		
-input BF_1EN;			
-input BF_2EN;			
-input BF_EN660;		
-input BF_EN500;		
-input BF_EN2;			
-input LA_BIAS1;		
-input LA_BIAS2;		
-input LA_BIAS3;		
-input LA_VREFA;		
-input LA_VREF;		    
-input reg123_wr;		
-input reg95_wr;		
-input MUX_GEN_V1P5; 	
-input PTAT_IEQ;		
-input reg97_wr;		
-input reg98_wr;		
-input reg102_wr;		
-input reg103_wr;	
-input reg104_wr;		
-input reg105_wr;		
-input reg106_wr;		
-input reg107_wr;		
-input reg108_wr;		
-input reg109_wr;		
-input reg110_wr;		
-input LA_RD2;		
-input LA_RD1;		
-input LA_RD4;		
-input LA_RD3;		
-input LA_RD6;		
-input LA_RD5;		
-input reg114_wr;		
-input reg115_wr;		
-input BF_CMFB;	    
-input BF_SRC;	
-input reg117_wr;		
-input reg118_wr;		
-input BF_RD2;	
-input BF_RD1;	
-input reg120_wr;		    					
-input reg124_wr;		
-input reg125_wr;	
+output reg04_exam;		
+output reg09_wr;		
+output reg11_wr;		
+output reg12_wr;	
+output reg13_wr;	
+output reg14_wr;	
+output reg15_wr;	
+output reg16_wr;	
+output LFPS_EN_CONTROLLER;	
+output reg18_wr;		
+output reg19_wr;		
+output reg20_wr;		
+output reg21_wr;		
+output reg22_wr;		
+output reg23_wr;		
+output reg24_wr;		
+output reg25_wr;		
+output reg26_wr;		
+output reg27_wr;		
+output reg28_wr;		
+output EN_EMP;
+output TX_EN_CONTROLLER;
+output reg30_wr;		
+output reg31_wr;		
+output reg32_wr;		
+output reg33_wr;		
+output reg34_wr;		
+output reg35_wr;		
+output reg36_wr;		
+output reg37_wr;		
+output reg38_wr;		
+output reg39_wr;		
+output reg40_wr;		
+output reg41_wr;		
+output reg42_wr;		
+output SYS_IMP_EN;	
+output reg44_wr;		
+output TIME100NS_OFF;	
+output EMP_VALUE_CTRL;	
+output LPMM_EN;
+output TIME40NS; 
+output TIME100NS_ON;   	
+output TIME300NS; 
+output TIME60NS_H;
+output TIME70NS_H;
+output TIME200NS; 
+output TIME170NS; 
+output TIME1MS; 
+output TIME16MS;
+output TIME50U; 
+output TIMEATT; 
+output TIME130MS;
+output TIME460MS;
+output ATT_PULSE_HIGH;
+output TIMEISPLUG;
+output TIME_EN_1; 
+output TIME_EN_2; 
+output TIME_EN_3; 
+output TIME_EN_4; 
+output TIME_EN_5; 
+output TIME_EN_6; 
+output TIME60NS_L;
+output TIME70NS_L;
+output CTR_LFPS_RX; 
+output CTR_SS_RX; 
+output CTR_LFPS_TX; 
+output CTR_SS_TX; 
+output ATT_PULSE_LOW;
+output TIME_HOLD_LOW;   
+output CTR_IS_PLUG; 
+output CTR_EN_LOW_IMP;
+output CTR_VALID_ATT;
+output CTR_TIMEOUT460;
+output SEL_STATE;		
+output SEL_PLUG_ATT;   	
+output AGC_125U_EN;		    
+output AGC_EN;			
+output TIA_ZPSW;		
+output BF_1EN;			
+output BF_2EN;			
+output BF_EN660;		
+output BF_EN500;		
+output BF_EN2;			
+output LA_BIAS1;		
+output LA_BIAS2;		
+output LA_BIAS3;		
+output LA_VREFA;		
+output LA_VREF;		    
+output reg123_wr;		
+output reg95_wr;		
+output MUX_GEN_V1P5; 	
+output PTAT_IEQ;		
+output reg97_wr;		
+output reg98_wr;		
+output reg102_wr;		
+output reg103_wr;	
+output reg104_wr;		
+output reg105_wr;		
+output reg106_wr;		
+output reg107_wr;		
+output reg108_wr;		
+output reg109_wr;		
+output reg110_wr;		
+output LA_RD2;		
+output LA_RD1;		
+output LA_RD4;		
+output LA_RD3;		
+output LA_RD6;		
+output LA_RD5;		
+output reg114_wr;		
+output reg115_wr;		
+output BF_CMFB;	    
+output BF_SRC;	
+output reg117_wr;		
+output reg118_wr;		
+output BF_RD2;	
+output BF_RD1;	
+output reg120_wr;		    					
+output reg124_wr;		
+output reg125_wr;	
 
 // define internal signal
 // by rcm_simplified
@@ -531,7 +534,8 @@ memtop memtop_i (
 .scan_clk					(scan_clk				),
 .i2c_sda_clk				(i2c_sda_clk			),
 .i2c_sda_n_clk				(i2c_sda_clk_n			),
-.i2c_scl					(reg_file_clk_2_rcm		),		//check, need to share i2c_scl and reg_file_clk
+.i2c_scl					(i2c_clk_after_del		),
+.i2c_scl_reg				(reg_file_clk_2_rcm		),
 .slow_clk					(slow_clk				),
 .i2c_stop_rst_n				(i2c_stop_rst_n			),
 .i2c_scl_rst_n				(i2c_scl_rst_n			),
@@ -553,8 +557,8 @@ memtop memtop_i (
 );
 
 io_ctrl io_ctrl_i (
-.i2c_sda_i					(i2c_din_before_del		),		// input data for i2c interface (put this signal to i2c delay block)
-.i2c_sda_o					(i2c_dout_after_del		),		// output data for i2c_interface (put this signal to i2c delay block)
+.i2c_sda_i					(i2c_din_before_del		),		// output data for i2c interface (put this signal to i2c delay block)
+.i2c_sda_o					(i2c_dout_after_del		),		// input data for i2c_interface (get this signal from i2c delay block)
 .sdx_input					(sdx_input				), 		// input value for SDX pad
 .sdx_output					(sdx_output				), 		// output to sdx pad
 .sdx_output_en_n			(sdx_output_en_n		) 		// output enable signal for SDX pad

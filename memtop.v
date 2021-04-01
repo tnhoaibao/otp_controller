@@ -27,6 +27,7 @@ module memtop (
 	i2c_sda_clk,	//clock signal from I2C SDA
 	i2c_sda_n_clk,	//clock signal from inverted I2C SDA
 	i2c_scl,		//I2C signal SCL
+	i2c_scl_reg, 	//I2c signal SCL used to generate clock for register file
 	slow_clk,		//Slow clock for I2C watchdog
 	i2c_stop_rst_n,	//Reset signal for I2C from STOP bit
 	i2c_scl_rst_n,	//Reset signal for I2C SCL
@@ -73,6 +74,7 @@ input scan_clk;
 input i2c_sda_clk;
 input i2c_sda_n_clk;
 input i2c_scl;
+input i2c_scl_reg;
 input slow_clk;
 input i2c_stop_rst_n;
 input i2c_scl_rst_n;
@@ -109,14 +111,7 @@ wire rcm_sys_clk;
 wire otp_done = ~otp_busy_w;
 
 // generate i2c_busy, it just for testing without i2c
-reg i2c_busy_w;
-initial begin
-  i2c_busy_w = 1'b0;
-  #10000;
-  i2c_busy_w = 1'b1;
-  #40000;
-  i2c_busy_w = 1'b0;
-end
+wire i2c_busy_w = ~hif_idle;
 
 // Instantiate i2c top module
 i2c_top i2c_top_i (
@@ -199,7 +194,7 @@ otp_rcm otp_rcm_i (
 .otp_busy			(otp_busy_w			),
 .scan_en			(scan_en			),
 .scan_clk			(scan_clk			),
-.i2c_clk			(i2c_scl			),	//register file clock generated from pure rcm module
+.i2c_clk			(i2c_scl_reg		),	//register file clock generated from pure rcm module
 .sys_clk			(sys_clk			),
 .rst_n				(rst_n				),
 .rcm_reg_clk		(reg_file_clk		),

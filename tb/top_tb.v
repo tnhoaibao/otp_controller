@@ -51,7 +51,7 @@ wire i2c_sda_o;
 wire hif_idle;
 
 
-top top_i (
+memtop memtop_i (
 .sys_clk (sys_clk), 	
 .rst_n (rst_n),		
 //sent/received to/from register file

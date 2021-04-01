@@ -117,7 +117,7 @@ always @(posedge sys_clk or negedge rst_n)
 always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0)
-      efuse_fsm_r <= IDLE;
+      efuse_fsm_r <= START_READ;
     else
       efuse_fsm_r <= efuse_fsm_next_s;
   end
@@ -283,8 +283,8 @@ always @(posedge sys_clk or negedge rst_n)
   end
 
 assign num_reg_w = num_reg_r + 1;
-assign xbus_addr_rd_next_w = ADDR_ARRAY[num_reg_r];
-assign xbus_addr_next_w = ADDR_ARRAY[num_reg_w];
+assign xbus_addr_rd_next_w = (num_reg_r != num_of_reg) ? ADDR_ARRAY[num_reg_r] : ADDR_ARRAY[num_of_reg - 1];
+assign xbus_addr_next_w = ((num_reg_w == num_of_reg) || (num_reg_w == num_of_reg + 1)) ? ADDR_ARRAY[num_of_reg - 1] : ADDR_ARRAY[num_reg_w];
 assign o_xbus_addr = xbus_addr_r;
 
 // generate otp_csb
