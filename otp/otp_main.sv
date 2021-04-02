@@ -124,7 +124,7 @@ always @(posedge sys_clk or negedge rst_n)
 
 always @(*)
   begin
-    if ((i_run_test_mode == 0) && (efuse_fsm_r != START_READ)) 
+    if ((i_run_test_mode == 0) && (efuse_fsm_r == WAIT_I2C)) 
       efuse_fsm_next_s = IDLE;
     else begin
       case (efuse_fsm_r)

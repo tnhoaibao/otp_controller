@@ -10,6 +10,7 @@ wire sda;
 wire hif_idle_wire;
 
 reg scan_en;
+reg scan_clk;
 reg sdx_input;
 reg scl_input;
 
