@@ -14,6 +14,14 @@ reg scan_clk;
 reg sdx_input;
 reg scl_input;
 
+wire o_otp_vddqsw;
+wire o_otp_csb;
+wire o_otp_strobe;
+wire o_otp_load;
+wire [7:0] i_otp_q;
+wire [9:0] o_otp_addr;
+wire o_otp_pgenb;
+
 digtop digtop_i (
 .xtal_clk (xtal_clk), 	
 .por_rst_n (por_rst_n),		
@@ -28,9 +36,25 @@ digtop digtop_i (
 .i2c_din_before_del (sda),
 .i2c_dout_after_del (sda_o),
 .i2c_dout_before_del (sda_o),
-.i_otp_q (i_otp_q),
 .scan_en (scan_en),
-.scan_clk (scan_clk)
+.scan_clk (scan_clk),
+.o_otp_vddqsw (o_otp_vddqsw ),		
+.o_otp_csb (o_otp_csb),		
+.o_otp_strobe (o_otp_strobe),		
+.o_otp_load (o_otp_load),			
+.i_otp_q (i_otp_q),			
+.o_otp_addr (o_otp_addr),		
+.o_otp_pgenb (o_otp_pgenb)
+);
+
+efuse_model efuse_model_i (
+.VDDQ (o_otp_vddqsw ),		
+.CSB (o_otp_csb),		
+.STROBE (o_otp_strobe),		
+.LOAD (o_otp_load),			
+.Q (i_otp_q),			
+.A (o_otp_addr),		
+.PGENB (o_otp_pgenb)
 );
 
 initial begin

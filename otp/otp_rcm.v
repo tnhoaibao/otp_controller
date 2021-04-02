@@ -46,9 +46,15 @@ wire en_i2c_clk; //enable signal after sync with i2c_clk
 
 wire i2c_clk_cg; //output i2c_clk of clock gate
 
+//wire i2c_clk_cg_n;
+
+//wire sys_clk_cg_n;
+
 wire sys_clk_cg; //output sys_clk of clock gate
 
 wire reg_clk; // sys_clk OR i2c_clk after clock gate stage
+
+wire reg_clk_n;
 
 /* wire i2c_busy_n_clk; //used for generating program/read enable access to otp controller
 reg o_otp_prog;		//program enable sent to otp_controller
@@ -123,11 +129,24 @@ CKLHQD8 CLOCK_GATE_I2C_CLK (
 				.CPN(i2c_clk),
 				.Q(i2c_clk_cg));
 
-OR2D4 OR_REG_CLK (	
+CKAN2D4 AND_REG_CLK (	
 				.A1(i2c_clk_cg),  //i2c_clk_cg OR sys_clk_cg
 				.A2(sys_clk_cg),
 				.Z(reg_clk));
+/*
+CKND8 INV_I2C_CLK (.I(i2c_clk_cg),
+				   .ZN(i2c_clk_cg_n)
+				   );
+				   
+CKND8 INV_SYS_CLK (.I(sys_clk_cg),
+				   .ZN(sys_clk_cg_n)
+				   );
 
+CKND8 INV_REG_CLK (.I(reg_clk_n),
+				   .ZN(reg_clk)
+				   );		
+*/			
+   
 // implement mux interface
 CKMUX2D2 MUX_REG_CLK (		
 				.I0(reg_clk), //mux interface for reg_clk

@@ -225,6 +225,19 @@ endmodule
 `endcelldefine
 
 `celldefine
+module CKAN2D4 (A1, A2, Z);
+    input A1, A2;
+    output Z;
+    and		(Z, A1, A2);
+
+  specify
+    (A1 => Z) = (0, 0);
+    (A2 => Z) = (0, 0);
+  endspecify
+endmodule
+`endcelldefine
+
+`celldefine
 module CKMUX2D2 (I0, I1, S, Z);
   input		I0, I1, S;
   output	Z;
@@ -251,6 +264,38 @@ module CKMUX2D2 (I0, I1, S, Z);
 endmodule
 `endcelldefine
 
+`celldefine
+module CKND8 (I, ZN);
+    input I;
+    output ZN;
+    not		(ZN, I);
+
+  specify
+    (I => ZN) = (0, 0);
+  endspecify
+endmodule
+`endcelldefine
+
+`celldefine
+module CKXOR2D0 (A1, A2, Z);
+  input 	A1, A2;
+  output 	Z;
+  xor		(Z, A1, A2);
+
+  specify
+    if (A2 == 1'b0)
+    (A1 => Z) = (0, 0);
+    if (A2 == 1'b1)
+    (A1 => Z) = (0, 0);
+    ifnone (A1 => Z) = (0, 0);
+    if (A1 == 1'b0)
+    (A2 => Z) = (0, 0);
+    if (A1 == 1'b1)
+    (A2 => Z) = (0, 0);
+    ifnone (A2 => Z) = (0, 0);
+  endspecify
+endmodule
+`endcelldefine
 primitive tsmc_dff (q, d, cp, cdn, sdn, notifier);
    output q;
    input d, cp, cdn, sdn, notifier;

@@ -24,7 +24,7 @@ module otp_main (
 	);
 
 parameter num_of_reg = 10; //number of registers will be loaded into otp memory
-parameter [6:0] ADDR_ARRAY [0 : num_of_reg-1] = {7'd1,  7'd2,  7'd3,  7'd4,  7'd5,  7'd6,  7'd7,  7'd8,  7'd9,  7'd10}; 
+parameter [6:0] ADDR_ARRAY [0 : num_of_reg-1] = {7'd18,  7'd19,  7'd20,  7'd21,  7'd22,  7'd23,  7'd24,  7'd25,  7'd26,  7'd27}; 
 //												 7'd11, 7'd12, 7'd13, 7'd14, 7'd15, 7'd16, 7'd17, 7'd18, 7'd19, 7'd20,
 //												 7'd21, 7'd22, 7'd23, 7'd24, 7'd25, 7'd26, 7'd27, 7'd28, 7'd29, 7'd30,
 //												 7'd31, 7'd32, 7'd33, 7'd34, 7'd35, 7'd36, 7'd37, 7'd38, 7'd39, 7'd40,
@@ -217,7 +217,7 @@ always @(posedge sys_clk or negedge rst_n)
     if (rst_n == 0)
 	  efuse_byte_addr_r <= 0;
 	else if (efuse_fsm_r == MAIN_READ) begin
-	  if ((efuse_no_bitline_r == 7) && (fsm_cnt_r == 3)) efuse_byte_addr_r <= efuse_byte_addr_next_w;
+	  if (fsm_cnt_r == 3) efuse_byte_addr_r <= efuse_byte_addr_next_w;
 	  else efuse_byte_addr_r <= efuse_byte_addr_r;
 	end else if ( efuse_fsm_r == MAIN_PGM) begin
 	  if ((efuse_no_bitline_r == 7) && (fsm_cnt_r == TPGM)) efuse_byte_addr_r <= efuse_byte_addr_next_w;
@@ -232,10 +232,7 @@ always @(posedge sys_clk or negedge rst_n)
   begin
     if (rst_n == 0)
 	  efuse_no_bitline_r <= 0;
-	else if (efuse_fsm_r == MAIN_READ) begin
-	  if (fsm_cnt_r == 3) efuse_no_bitline_r <= efuse_no_bitline_next_w;
-	  else efuse_no_bitline_r <= efuse_no_bitline_r;
-	end else if (efuse_fsm_r == MAIN_PGM) begin
+	else if (efuse_fsm_r == MAIN_PGM) begin
 	  if (fsm_cnt_r == TPGM) efuse_no_bitline_r <= efuse_no_bitline_next_w;
 	  else efuse_no_bitline_r <= efuse_no_bitline_r;
 	end else efuse_no_bitline_r <= 0;
