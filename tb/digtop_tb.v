@@ -11,8 +11,8 @@ wire hif_idle_wire;
 
 reg scan_en;
 reg scan_clk;
-reg sdx_input;
-reg scl_input;
+wire sdx_input;
+wire scl_input;
 
 wire o_otp_vddqsw;
 wire o_otp_csb;
@@ -21,6 +21,17 @@ wire o_otp_load;
 wire [7:0] i_otp_q;
 wire [9:0] o_otp_addr;
 wire o_otp_pgenb;
+reg clk_scl;
+reg clk_sda;
+reg i2c_reset_n;
+
+i2c_master i2c_master_i (
+.clk_scl (clk_scl),
+.clk_sda (clk_sda),
+.rst_n   (i2c_reset_n),
+.i2c_sda (sdx_input),
+.i2c_scl (scl_input)
+);
 
 digtop digtop_i (
 .xtal_clk (xtal_clk), 	
@@ -44,7 +55,8 @@ digtop digtop_i (
 .o_otp_load (o_otp_load),			
 .i_otp_q (i_otp_q),			
 .o_otp_addr (o_otp_addr),		
-.o_otp_pgenb (o_otp_pgenb)
+.o_otp_pgenb (o_otp_pgenb),
+.hif_idle_out (hif_idle_wire)
 );
 
 efuse_model efuse_model_i (
@@ -57,10 +69,32 @@ efuse_model efuse_model_i (
 .PGENB (o_otp_pgenb)
 );
 
+always begin
+  clk_scl = 1'b1;
+  #20;
+  clk_scl = 1'b0;
+  #20;
+end
+
+always begin
+  clk_sda = 1'b0;
+  #5;
+  clk_sda = 1'b1;
+  #20;
+  clk_sda = 1'b0;
+  #15;
+end
+
+initial begin
+  i2c_reset_n = 1'b0;
+  #16000;
+  i2c_reset_n = 1'b1;
+end
+
 initial begin
   scan_en = 1'b0;
-  sdx_input = 1'b1;
-  scl_input = 1'b1;
+//  sdx_input = 1'b1;
+//  scl_input = 1'b1;
   scan_clk = 1'b0;
 end
 

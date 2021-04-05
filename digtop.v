@@ -577,5 +577,4 @@ io_ctrl io_ctrl_i (
 .sdx_output_en_n			(sdx_output_en_n		) 		// output enable signal for SDX pad
 );
 
-
 endmodule

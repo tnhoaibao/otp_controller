@@ -85,7 +85,6 @@ always @ (i2c_xbus_addr or i2c_xbus_wr or i2c_xbus_din or xbus_dout)
 		i2c_xbus_dout = xbus_dout;
 	end
 		
-	
 // Instantiate I2C reset
 i2c_reset i2c_reset_i (
 	.otp_done(otp_done),
