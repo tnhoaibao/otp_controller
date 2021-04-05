@@ -38,7 +38,7 @@ digtop digtop_i (
 .por_rst_n (por_rst_n),		
 .hif_scl (scl_input),
 .hif_scl_del (scl_input),
-.hif_sda_del (scl_input),
+.hif_sda_del (sda),
 .slow_clk_in (slow_clk_in),
 .sdx_input (sdx_input),
 .hif_idle_feedback (hif_idle_wire),
