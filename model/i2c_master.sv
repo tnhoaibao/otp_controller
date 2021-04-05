@@ -63,33 +63,19 @@ always @(posedge clk_sda or negedge rst_n) begin
 		addr <= 8'd18;				//first register will be read/write to register file						
 		count <= 3'd6;
 		count_data <= 3'd7;
-		count_state_wait <= 0;
-		data[04] <= 8'h80;					
-		data[05] <= 8'h00;
-		data[06] <= 8'h00;	
-		data[07] <= 8'h00;
-		data[08] <= 8'h0A;
-		data[09] <= 8'h00;
-		data[11] <= 8'hFF;
-		data[12] <= 8'hFF;
-		data[13] <= 8'hFF;
-		data[14] <= 8'hFF;
-		data[15] <= 8'hFF;
-		data[16] <= 8'hFF;
-		data[17] <= 8'hFF;
-		data[18] <= 8'hFF;
-		data[19] <= 8'hFF;
-		data[20] <= 8'hFF;
-    	data[21] <= 8'hFF;
-     	data[22] <= 8'hFF;
+		data[18] <= 8'hAA;
+		data[19] <= 8'hBB;
+		data[20] <= 8'hCC;
+    	data[21] <= 8'hDD;
+     	data[22] <= 8'hEE;
     	data[23] <= 8'hFF;
-     	data[24] <= 8'hFF;
-     	data[25] <= 8'hFF;
-    	data[26] <= 8'hFF;
-     	data[27] <= 8'hFF;
-      	data[28] <= 8'hFF;
-      	data[29] <= 8'hFF;
-       	data[30] <= 8'hFF;
+     	data[24] <= 8'hAB;
+     	data[25] <= 8'hAC;
+    	data[26] <= 8'hAD;
+     	data[27] <= 8'hAE;
+      	data[28] <= 8'hAF;
+      	data[29] <= 8'hBA;
+       	data[30] <= 8'hBC;
 		number_data <= number_stop;
 		addr_reg_device_flag <= 1'b0;
 	end else begin
@@ -173,13 +159,7 @@ always @(posedge clk_sda or negedge rst_n) begin
 			STATE_WAIT: begin
 				i2c_dout <= 1'b1;
 				i2c_sda <= 1'b1;
-				if (count_state_wait == 7) begin
-					state <= STATE_IDLE;
-					count_state_wait <= 0;	
-				end else begin 
-					state <= STATE_WAIT;
-					count_state_wait <= count_state_wait + 1;
-				end
+				state <= STATE_WAIT;
 			end	
 		endcase	
 	end
