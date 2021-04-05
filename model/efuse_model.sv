@@ -91,9 +91,9 @@ always @(posedge STROBE)
   
 // implement read operation
 // model TEF65GP128x8HD
-always @(posedge STROBE_n)
+always @(posedge STROBE)
   begin
-    if (READ_MODE == 1'b1)
+    if (READ_MODE == 1'b1) begin
 	  case (A[6:0])
 	  	7'd0: Q <= efuse_00;
 		7'd1: Q <= efuse_01;
@@ -106,6 +106,8 @@ always @(posedge STROBE_n)
 		7'd8: Q <= efuse_08;
 		7'd9: Q <= efuse_09;
 	  endcase
+	end else Q <= $random;
+	 
   end
   
 endmodule

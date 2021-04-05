@@ -25,7 +25,7 @@ wire o_otp_pgenb;
 digtop digtop_i (
 .xtal_clk (xtal_clk), 	
 .por_rst_n (por_rst_n),		
-.hif_scl (scl),
+.hif_scl (scl_input),
 .hif_scl_del (scl_input),
 .hif_sda_del (scl_input),
 .slow_clk_in (slow_clk_in),
