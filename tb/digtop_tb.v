@@ -21,16 +21,31 @@ wire o_otp_load;
 wire [7:0] i_otp_q;
 wire [9:0] o_otp_addr;
 wire o_otp_pgenb;
-reg clk_scl;
-reg clk_sda;
-reg i2c_reset_n;
+reg clk_scl_1;
+reg clk_sda_1;
+reg i2c_reset_n_1;
+reg clk_scl_2;
+reg clk_sda_2;
+reg i2c_reset_n_2;
+wire sdx_input_1;
+wire sdx_input_2;
+wire scl_input_1;
+wire scl_input_2;
 
-i2c_master i2c_master_i (
-.clk_scl (clk_scl),
-.clk_sda (clk_sda),
-.rst_n   (i2c_reset_n),
-.i2c_sda (sdx_input),
-.i2c_scl (scl_input)
+i2c_master_1 i2c_master_1 (
+.clk_scl (clk_scl_1),
+.clk_sda (clk_sda_1),
+.rst_n   (i2c_reset_n_1),
+.i2c_sda (sdx_input_1),
+.i2c_scl (scl_input_1)
+);
+
+i2c_master_passcode i2c_master_2 (
+.clk_scl (clk_scl_2),
+.clk_sda (clk_sda_2),
+.rst_n   (i2c_reset_n_2),
+.i2c_sda (sdx_input_2),
+.i2c_scl (scl_input_2)
 );
 
 digtop digtop_i (
@@ -69,27 +84,55 @@ efuse_model efuse_model_i (
 .PGENB (o_otp_pgenb)
 );
 
+assign sdx_input = (i2c_reset_n_2 == 1) ? sdx_input_2 : sdx_input_1;
+assign scl_input = (i2c_reset_n_2 == 1) ? scl_input_2 : scl_input_1;
+
+//setup i2c transfer i2c master_1 --> usb chip
 always begin
-  clk_scl = 1'b1;
+  clk_scl_1 = 1'b1;
   #20;
-  clk_scl = 1'b0;
+  clk_scl_1 = 1'b0;
   #20;
 end
 
 always begin
-  clk_sda = 1'b0;
+  clk_sda_1 = 1'b0;
   #5;
-  clk_sda = 1'b1;
+  clk_sda_1 = 1'b1;
   #20;
-  clk_sda = 1'b0;
+  clk_sda_1 = 1'b0;
   #15;
 end
 
 initial begin
-  i2c_reset_n = 1'b0;
+  i2c_reset_n_1 = 1'b0;
   #16000;
-  i2c_reset_n = 1'b1;
+  i2c_reset_n_1 = 1'b1;
 end
+
+//setup i2c transfer i2c master_2 --> usb chip
+always begin
+  clk_scl_2 = 1'b1;
+  #20;
+  clk_scl_2 = 1'b0;
+  #20;
+end
+
+always begin
+  clk_sda_2 = 1'b0;
+  #5;
+  clk_sda_2 = 1'b1;
+  #20;
+  clk_sda_2 = 1'b0;
+  #15;
+end
+
+initial begin
+  i2c_reset_n_2 = 1'b0;
+  #30000;
+  i2c_reset_n_2 = 1'b1;
+end
+
 
 initial begin
   scan_en = 1'b0;

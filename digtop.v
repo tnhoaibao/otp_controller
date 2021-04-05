@@ -344,6 +344,7 @@ wire i_otp_prog;
 wire reg_file_clk;
 wire [6:0] i2c_addr;
 wire i2c_wd_sel;
+wire [7:0] passcode;
 
 regfile regfile_i (
 .rst_n 					(rst_n				),		
