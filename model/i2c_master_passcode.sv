@@ -26,9 +26,10 @@ typedef enum {STATE_IDLE, STATE_START, STATE_ADDR, STATE_RW, STATE_WACK, STATE_D
 fsm_state state;
 
 parameter addr_device = 7'h0A;
+parameter addr_passcode = 8'h05; //address of passcode register
+parameter addr_otp = 8'h04;		//address contains read/write enable for otp transaction
 
 reg [2:0] number_data;			//data related to current register, data[number_data]
-reg [7:0] addr;					//address of first register
 reg [7:0] data[0:5];//data array used to write to register file
 reg [2:0] count;				//down counter for device/register address
 reg [2:0] count_data;			//down counter for data
@@ -56,8 +57,7 @@ always @(posedge clk_sda or negedge rst_n) begin
 	if(rst_n == 1'b0) begin
 		state <= STATE_IDLE;
 		i2c_dout <= 1'b1;
-		i2c_sda <= 1'b1;
-		addr <= 8'h05;				//first register will be read/write to register file						
+		i2c_sda <= 1'b1;						
 		count <= 3'd6;
 		count_data <= 3'd7;
 		data[0] <= 8'h50;			//define for P
@@ -66,7 +66,7 @@ always @(posedge clk_sda or negedge rst_n) begin
 		data[3] <= 8'h47;			//define for G
 		data[4] <= 8'h4E;			//define for N
 		data[5] <= 8'h58;			//define for X
-		data[6] <= 				//define register 04, read otp or write otp
+		data[6] <= 8'h00;				//define register 04, (8'h00) read otp or (8'h11) write otp, nothing (8'h01)
 		number_data <= 0;
 		addr_reg_device_flag <= 1'b0;
 	end else begin
@@ -87,8 +87,11 @@ always @(posedge clk_sda or negedge rst_n) begin
 			STATE_ADDR: begin 	// msb addr bit
 				i2c_dout <= 1'b1;
 				if (addr_reg_device_flag == 1'b0) i2c_sda <= addr_device[count];
-				else i2c_sda <= addr[count];
-
+				else if (number_data != 6)
+					i2c_sda <= addr_passcode[count];
+				else
+					i2c_sda <= addr_otp[count];
+					
 				if (count == 0) begin
 					if (addr_reg_device_flag == 1'b0) state <= STATE_RW;
 					else state <= STATE_WACK;
@@ -144,7 +147,7 @@ always @(posedge clk_sda or negedge rst_n) begin
 			STATE_WAIT: begin
 				i2c_dout <= 1'b1;
 				i2c_sda <= 1'b1;
-				if (number_data == 5) begin
+				if (number_data == 6) begin
 					number_data <= number_data;
 					state <= STATE_WAIT;
 				end else begin 
