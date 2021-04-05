@@ -5,7 +5,6 @@ module digtop_tb;
 reg xtal_clk;
 reg por_rst_n;
 
-wire scl;
 wire sda;
 wire hif_idle_wire;
 

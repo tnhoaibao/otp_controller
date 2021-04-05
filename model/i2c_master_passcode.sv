@@ -66,6 +66,7 @@ always @(posedge clk_sda or negedge rst_n) begin
 		data[3] <= 8'h47;			//define for G
 		data[4] <= 8'h4E;			//define for N
 		data[5] <= 8'h58;			//define for X
+		data[6] <= 				//define register 04, read otp or write otp
 		number_data <= 0;
 		addr_reg_device_flag <= 1'b0;
 	end else begin
