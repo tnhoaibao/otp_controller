@@ -30,7 +30,7 @@ parameter addr_passcode = 8'h05; //address of passcode register
 parameter addr_otp = 8'h04;		//address contains read/write enable for otp transaction
 
 reg [2:0] number_data;			//data related to current register, data[number_data]
-reg [7:0] data[0:5];//data array used to write to register file
+reg [7:0] data[0:6];//data array used to write to register file
 reg [2:0] count;				//down counter for device/register address
 reg [2:0] count_data;			//down counter for data
 reg [3:0] count_state_wait;		//up counter for waiting time between 2 i2c transaction

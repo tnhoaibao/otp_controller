@@ -58,7 +58,7 @@ assign STROBE_n = ~STROBE;
 
 // determine boot phase value
 initial begin
-  efuse_00 = 8'h00;
+  efuse_00 = 8'h10;
   efuse_01 = 8'hFF;
   efuse_02 = 8'h00;
   efuse_03 = 8'hFF;
