@@ -54,7 +54,6 @@ always @(negedge clk_scl or negedge rst_n) begin
 	end
 end
 
-
 always @(posedge clk_sda or negedge rst_n) begin
 	if(rst_n == 1'b0) begin
 		state <= STATE_IDLE;

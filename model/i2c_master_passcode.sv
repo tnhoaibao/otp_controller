@@ -22,7 +22,7 @@ reg i2c_sda;
 wire i2c_scl;
 reg i2c_dout;		
 
-typedef enum {STATE_IDLE, STATE_START, STATE_ADDR, STATE_RW, STATE_WACK, STATE_DATA, STATE_STOP, STATE_WACK2, STATE_SIGNAL, STATE_WAIT} fsm_state;
+typedef enum {STATE_IDLE, STATE_START, STATE_ADDR, STATE_RW, STATE_WACK, STATE_DATA, STATE_STOP, STATE_STOP_PRE, STATE_WACK2, STATE_SIGNAL, STATE_WAIT} fsm_state;
 fsm_state state;
 
 parameter addr_device = 7'h0A;
@@ -134,6 +134,12 @@ always @(posedge clk_sda or negedge rst_n) begin
 			STATE_WACK2: begin
 				i2c_dout <= 1'b0;
 				count_data <= 3'd7;
+				i2c_sda <= 1'b0;
+				state <= STATE_STOP_PRE;
+			end
+			
+			STATE_STOP_PRE: begin
+				i2c_dout <= 1'b1;
 				i2c_sda <= 1'b0;
 				state <= STATE_STOP;
 			end

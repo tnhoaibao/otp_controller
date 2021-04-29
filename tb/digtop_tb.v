@@ -96,11 +96,11 @@ end
 
 always begin
   clk_sda_1 = 1'b0;
-  #5;
+  #2;
   clk_sda_1 = 1'b1;
   #20;
   clk_sda_1 = 1'b0;
-  #15;
+  #18;
 end
 
 initial begin
@@ -119,11 +119,11 @@ end
 
 always begin
   clk_sda_2 = 1'b0;
-  #5;
+  #2;
   clk_sda_2 = 1'b1;
   #20;
   clk_sda_2 = 1'b0;
-  #15;
+  #18;
 end
 
 initial begin
