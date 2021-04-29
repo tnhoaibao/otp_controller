@@ -23,8 +23,9 @@ module otp_main (
 	o_otp_busy 		//input signal indicates that there is otp transaction or not, 1-i2c transaction, 0-no i2c transaction
 	);
 
-parameter num_of_reg = 10; //number of registers will be loaded into otp memory
-parameter [6:0] ADDR_ARRAY [0 : num_of_reg-1] = {7'd4,  7'd19,  7'd20,  7'd21,  7'd22,  7'd23,  7'd24,  7'd25,  7'd26,  7'd27}; 
+parameter num_of_reg = 9; //number of registers will be loaded into otp memory
+
+parameter [0 : num_of_reg-1] [6:0] ADDR_ARRAY   = {7'd19,  7'd20,  7'd21,  7'd22,  7'd23,  7'd24,  7'd25,  7'd26,  7'd27}; 
 //												 7'd11, 7'd12, 7'd13, 7'd14, 7'd15, 7'd16, 7'd17, 7'd18, 7'd19, 7'd20,
 //												 7'd21, 7'd22, 7'd23, 7'd24, 7'd25, 7'd26, 7'd27, 7'd28, 7'd29, 7'd30,
 //												 7'd31, 7'd32, 7'd33, 7'd34, 7'd35, 7'd36, 7'd37, 7'd38, 7'd39, 7'd40,
@@ -93,6 +94,12 @@ reg efuse_pgenb_r;
 reg [7:0] xbus_din_r;
 reg xbus_wr_r;
 
+wire otp_prog_s;
+wire otp_read_n_s;
+reg sel_prog_r; // select between otp_prog  from register file and logic 0 or between otp_read_n from register file and logic 1
+wire sel_prog;
+wire status; // go high when state is MAIN_READ or MAIN_PGM 
+
 // define states in fsm
 typedef enum {IDLE, WAIT_I2C, START_READ, MAIN_READ, FINISH_READ, START_PGM, MAIN_PGM, FINISH_PGM, OTP_DONE} efuse_fsm_t;
 efuse_fsm_t efuse_fsm_r, efuse_fsm_next_s;
@@ -108,6 +115,28 @@ always @(posedge sys_clk or negedge rst_n)
 	  i2c_busy_temp2 <= i2c_busy_temp1;
 	end
   end
+
+
+//after transaction finishs, change value of enable bits to initial value to start new transaction
+assign status = (efuse_fsm_r == MAIN_READ || efuse_fsm_r == MAIN_PGM)? 1'b1 : 1'b0;
+always @(posedge sys_clk or negedge rst_n)
+begin
+  if (rst_n == 1'b0)
+    sel_prog_r <= 1'b0;
+  else
+    begin
+      if ((i_otp_prog == 1'b1 || i_otp_read_n == 1'b0) && status == 1'b1)
+        sel_prog_r <= 1'b1;
+      else if (i_otp_prog == 1'b0 && i_otp_read_n == 1'b1 && status == 1'b0)
+        sel_prog_r <= 1'b0;
+     else
+        sel_prog_r <= sel_prog;
+         
+    end
+end
+assign sel_prog = sel_prog_r;
+assign otp_prog_s = (sel_prog == 1'b0)? i_otp_prog : 1'b0;
+assign otp_read_n_s = (sel_prog == 1'b0)? i_otp_read_n : 1'b1;
 
 // implement fsm for otp controller
 // specification v1.1
@@ -129,12 +158,12 @@ always @(*)
     else begin
       case (efuse_fsm_r)
 		IDLE: efuse_fsm_next_s = WAIT_I2C;
-		WAIT_I2C: if ((i2c_busy_temp2 == 1'b0) && (i_otp_prog == 1'b1))
+		WAIT_I2C: if ((i2c_busy_temp2 == 1'b0) && (otp_prog_s == 1'b1))
 						efuse_fsm_next_s = START_PGM;
-					else if ((i2c_busy_temp2 == 1'b0) && (i_otp_read_n == 1'b0)) 
+					else if ((i2c_busy_temp2 == 1'b0) && (otp_read_n_s == 1'b0)) 
 						efuse_fsm_next_s = START_READ;
-					else if (i2c_busy_temp2 == 1'b1) 
-						efuse_fsm_next_s = IDLE;
+					//else if (i2c_busy_temp2 == 1'b1) 
+					//	efuse_fsm_next_s = IDLE;
 					else 
 						efuse_fsm_next_s = WAIT_I2C;
 		START_READ: if (fsm_cnt_r == 1) 
@@ -267,7 +296,7 @@ always @(posedge sys_clk or negedge rst_n)
 	    xbus_addr_r <= xbus_addr_r;
 		num_reg_r <= num_reg_r;
 	  end
-    end else if (efuse_fsm_r == FINISH_READ) begin
+    end else if (efuse_fsm_r == FINISH_READ || efuse_fsm_r == FINISH_PGM) begin
       xbus_addr_r <= xbus_addr_r;
 	  num_reg_r <= num_reg_r;	
 	end else if (efuse_fsm_r == OTP_DONE) begin
